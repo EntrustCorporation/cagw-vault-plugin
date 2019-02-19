@@ -15,22 +15,22 @@ func pathConfig(b *backend) *framework.Path {
 
 		HelpSynopsis:    "CAGW Configuration",
 		HelpDescription: "Configures CAGW parameters including client cert and key.",
-		Fields: map[string]*framework.FieldSchema{},
+		Fields:          map[string]*framework.FieldSchema{},
 	}
 
 	ret.Fields["cert"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
-		Description: `PEM encoded certificate`,
+		Description: `PEM encoded client certificate`,
 	}
 
 	ret.Fields["key"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
-		Description: `PEM encoded private key`,
+		Description: `PEM encoded client private key`,
 	}
 
-	ret.Fields["caId"] = &framework.FieldSchema{
+	ret.Fields["caid"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
 		Description: `CA identifier`,
@@ -42,6 +42,11 @@ func pathConfig(b *backend) *framework.Path {
 		Description: `URL for CAGW including base context path`,
 	}
 
+	ret.Fields["cacerts"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Default:     "",
+		Description: `PEM encoded CA certificate chain`,
+	}
+
 	return ret
 }
-

@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/pem"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 )
 
 func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	certPem := data.Get("cert").([]byte)
-	keyPem := data.Get("key").([]byte)
+	certPem := data.Get("cert").(string)
+	keyPem := data.Get("key").(string)
 	caId := data.Get("caid").(string)
 	url := data.Get("url").(string)
+	caCertPem := data.Get("cacerts").(string)
 
 	if len(certPem) == 0 {
 		return logical.ErrorResponse("must provide PEM encoded certificate"), nil
@@ -25,22 +25,31 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 	if len(url) == 0 {
 		return logical.ErrorResponse("must provide gateway URL"), nil
 	}
-
-	certBlock, _ := pem.Decode(certPem)
-	if certBlock == nil {
-		return logical.ErrorResponse("certificate could not be decoded"), nil
+	if len(caCertPem) == 0 {
+		return logical.ErrorResponse("must provide gateway CA certificate"), nil
 	}
 
-	keyBlock, _ := pem.Decode(keyPem)
-	if certBlock == nil {
-		return logical.ErrorResponse("key could not be decoded"), nil
-	}
+	//certBlock, _ := pem.Decode([]byte(certPem))
+	//if certBlock == nil {
+	//	return logical.ErrorResponse("certificate could not be decoded"), nil
+	//}
+
+	//keyBlock, _ := pem.Decode([]byte(keyPem))
+	//if keyBlock == nil {
+	//	return logical.ErrorResponse("key could not be decoded"), nil
+	//}
+
+	//caCertBlock, _ := pem.Decode([]byte(caCertPem))
+	//if caCertBlock == nil {
+	//	return logical.ErrorResponse("CA certificate could not be decoded"), nil
+	//}
 
 	entry := &CAGWConfigEntry{
-		certBlock.Bytes,
-		keyBlock.Bytes,
+		[]byte(certPem),
+		[]byte(keyPem),
 		caId,
 		url,
+		caCertPem,
 	}
 
 	storageEntry, err := logical.StorageEntryJSON("config/cagw", entry)
@@ -56,12 +65,11 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 
 	respData := map[string]interface{}{
 		"Message": "Configuration successful",
-		"CaId": caId,
-		"URL": url,
+		"CaId":    caId,
+		"URL":     url,
 	}
 
 	return &logical.Response{
 		Data: respData,
 	}, nil
 }
-
