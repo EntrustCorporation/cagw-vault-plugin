@@ -45,8 +45,8 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 	//}
 
 	entry := &CAGWConfigEntry{
-		[]byte(certPem),
-		[]byte(keyPem),
+		certPem,
+		keyPem,
 		caId,
 		url,
 		caCertPem,

@@ -1,12 +1,12 @@
 package main
 
 type EnrollmentResponse struct {
-	enrollment Enrollment
-	message Message
+	Enrollment Enrollment `json:"enrollment"`
+	Message    Message    `json:"message"`
 }
 
 type Enrollment struct {
-	id string
-	status string
-	body []byte
+	Id     string `json:"id"`
+	Status string `json:"status"`
+	Body   []byte `json:"body"`
 }

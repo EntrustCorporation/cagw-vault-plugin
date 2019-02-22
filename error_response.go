@@ -1,13 +1,13 @@
 package main
 
 type ErrorResponse struct {
-	message Message
-	error Error
+	Message Message `json:"message"`
+	Error   Error   `json:"error"`
 }
 
 type Error struct {
-	code string
-	message string
-	target string
-	value string
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Target  string `json:"target"`
+	Value   string `json:"value"`
 }

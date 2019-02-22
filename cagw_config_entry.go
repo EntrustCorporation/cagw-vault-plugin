@@ -1,8 +1,8 @@
 package main
 
 type CAGWConfigEntry struct {
-	Cert       []byte
-	PrivateKey []byte
+	Cert       string
+	PrivateKey string
 	CaId       string
 	URL        string
 	CACerts    string
