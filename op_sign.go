@@ -91,7 +91,14 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	}
 
 	if resp.StatusCode != 200 {
-		b.Logger().Debug(fmt.Sprintf("Received failure response code: %d", resp.StatusCode))
+
+		if b.Logger().IsDebug() {
+			if resp.StatusCode >= 400 {
+				b.Logger().Debug(fmt.Sprintf("Received failure response code: %d", resp.StatusCode))
+			} else {
+				b.Logger().Debug(fmt.Sprintf("Received response code: %d", resp.StatusCode))
+			}
+		}
 
 		var errorResponse ErrorResponse
 		err = json.Unmarshal(responseBody, &errorResponse)

@@ -18,34 +18,32 @@ func pathConfig(b *backend) *framework.Path {
 		Fields:          map[string]*framework.FieldSchema{},
 	}
 
-	ret.Fields["cert"] = &framework.FieldSchema{
+	ret.Fields["pem_bundle"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
-		Description: `PEM encoded client certificate`,
-	}
-
-	ret.Fields["key"] = &framework.FieldSchema{
-		Type:        framework.TypeString,
-		Default:     "",
-		Description: `PEM encoded client private key`,
+		Description: `PEM encoded client certificate and key.`,
+		Required:    true,
 	}
 
 	ret.Fields["caid"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
 		Description: `CA identifier`,
+		Required:    true,
 	}
 
 	ret.Fields["url"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
 		Description: `URL for CAGW including base context path`,
+		Required:    true,
 	}
 
 	ret.Fields["cacerts"] = &framework.FieldSchema{
-		Type:        framework.TypeString,
-		Default:     "",
-		Description: `PEM encoded CA certificate chain`,
+		Type:    framework.TypeString,
+		Default: "",
+		Description: "PEM encoded CA certificate chain. Not needed if the gateway's " +
+			"certificate is publicly trusted.",
 	}
 
 	return ret

@@ -23,6 +23,7 @@ func Backend(conf *logical.BackendConfig) *backend {
 		Paths: []*framework.Path{
 			pathConfig(&b),
 			pathSign(&b),
+			pathConfigProfile(&b),
 		},
 		PathsSpecial: &logical.Paths{
 			Unauthenticated: []string{
@@ -38,4 +39,3 @@ func Backend(conf *logical.BackendConfig) *backend {
 type backend struct {
 	*framework.Backend
 }
-
