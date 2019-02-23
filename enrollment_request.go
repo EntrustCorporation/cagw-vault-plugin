@@ -1,11 +1,17 @@
 package main
 
 type EnrollmentRequest struct {
-	profileId string
-	requiredFormat RequiredFormat
-	csr string
+	ProfileId        string            `json:"profileId"`
+	RequiredFormat   RequiredFormat    `json:"requiredFormat"`
+	CSR              string            `json:"csr"`
+	SubjectVariables []SubjectVariable `json:"subjectVariables"`
 }
 
 type RequiredFormat struct {
-	format string
+	Format string `json:"format"`
+}
+
+type SubjectVariable struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }

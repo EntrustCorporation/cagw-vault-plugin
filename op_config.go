@@ -7,17 +7,13 @@ import (
 )
 
 func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	certPem := data.Get("cert").(string)
-	keyPem := data.Get("key").(string)
+	certPem := data.Get("pem_bundle").(string)
 	caId := data.Get("caid").(string)
 	url := data.Get("url").(string)
 	caCertPem := data.Get("cacerts").(string)
 
 	if len(certPem) == 0 {
 		return logical.ErrorResponse("must provide PEM encoded certificate"), nil
-	}
-	if len(keyPem) == 0 {
-		return logical.ErrorResponse("must provide PEM encoded key"), nil
 	}
 	if len(caId) == 0 {
 		return logical.ErrorResponse("must provide CA identifier"), nil
@@ -29,24 +25,8 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 		return logical.ErrorResponse("must provide gateway CA certificate"), nil
 	}
 
-	//certBlock, _ := pem.Decode([]byte(certPem))
-	//if certBlock == nil {
-	//	return logical.ErrorResponse("certificate could not be decoded"), nil
-	//}
-
-	//keyBlock, _ := pem.Decode([]byte(keyPem))
-	//if keyBlock == nil {
-	//	return logical.ErrorResponse("key could not be decoded"), nil
-	//}
-
-	//caCertBlock, _ := pem.Decode([]byte(caCertPem))
-	//if caCertBlock == nil {
-	//	return logical.ErrorResponse("CA certificate could not be decoded"), nil
-	//}
-
 	entry := &CAGWConfigEntry{
 		certPem,
-		keyPem,
 		caId,
 		url,
 		caCertPem,

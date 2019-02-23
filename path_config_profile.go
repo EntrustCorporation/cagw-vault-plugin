@@ -7,10 +7,10 @@ import (
 
 func pathConfigProfile(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "config/" + framework.GenericNameRegex("profile"),
+		Pattern: "config/profiles/" + framework.GenericNameRegex("profile"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
-			logical.UpdateOperation: &framework.PathOperation{Callback: b.opConfig},
+			logical.UpdateOperation: &framework.PathOperation{Callback: b.opConfigProfile},
 		},
 
 		HelpSynopsis:    "CAGW Profile Configuration",
@@ -20,7 +20,7 @@ func pathConfigProfile(b *backend) *framework.Path {
 
 	ret.Fields["common_name_variable"] = &framework.FieldSchema{
 		Type:    framework.TypeString,
-		Default: "common_name",
+		Default: "cn",
 		Description: "The name of the subject variable to used to supply the common " +
 			"name to the gateway.",
 	}

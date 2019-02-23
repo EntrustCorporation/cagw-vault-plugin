@@ -13,10 +13,16 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	csrPem := data.Get("csr").(string)
+	commonName := data.Get("common_name").(string)
+
+	if len(commonName) <= 0 {
+		return logical.ErrorResponse("common_name is empty"), nil
+	}
 
 	csrBlock, _ := pem.Decode([]byte(csrPem))
 	if csrBlock == nil {
@@ -38,17 +44,50 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		return logical.ErrorResponse("CAGW configuration could not be parsed: %v", err), err
 	}
 
+	profileName := data.Get("profile").(string)
+
+	profileStorageEntry, err := req.Storage.Get(ctx, "config/profile/"+profileName)
+
+	if err != nil {
+		return logical.ErrorResponse("CAGW profile configuration could not be loaded: %v", err), err
+	}
+
+	configProfileEntry := CAGWConfigProfileEntry{}
+
+	// If there is a storage entry, decode it, else use defaults
+	if profileStorageEntry != nil {
+		err = profileStorageEntry.DecodeJSON(&configProfileEntry)
+		if err != nil {
+			return logical.ErrorResponse("CAGW profile configuration could not be parsed: %v", err), err
+		}
+	} else {
+		configProfileEntry.CommonNameVariable = "cn"
+		configProfileEntry.TTL, _ = time.ParseDuration("2160h")
+		configProfileEntry.MaxTTL = 0
+	}
+
+	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
-		profileId: req.GetString("profile"),
-		requiredFormat: RequiredFormat{
-			format: "X509",
+		ProfileId: profileName,
+		RequiredFormat: RequiredFormat{
+			Format: "X509",
 		},
-		csr: csrBase64,
+		CSR: csrBase64,
+		SubjectVariables: []SubjectVariable{
+			{configProfileEntry.CommonNameVariable, commonName},
+		},
 	}
 
 	body, err := json.Marshal(enrollmentRequest)
+	if err != nil {
+		return logical.ErrorResponse("Error constructing enrollment request: %v", err), err
+	}
 
-	certificate, err := tls.X509KeyPair([]byte(configEntry.Cert), []byte(configEntry.PrivateKey))
+	if b.Logger().IsDebug() {
+		b.Logger().Debug(fmt.Sprintf("Enrollment request body: %v", string(body)))
+	}
+
+	certificate, err := tls.X509KeyPair([]byte(configEntry.Cert), []byte(configEntry.Cert))
 	if err != nil {
 		return logical.ErrorResponse("Error parsing client certificate and key: %v", err), err
 	}

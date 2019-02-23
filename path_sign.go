@@ -18,6 +18,13 @@ func pathSign(b *backend) *framework.Path {
 		Fields:          map[string]*framework.FieldSchema{},
 	}
 
+	ret.Fields["profile"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Default:     "",
+		Description: "Name of CAGW profile to use for enrollment",
+		Required:    true,
+	}
+
 	ret.Fields["csr"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
