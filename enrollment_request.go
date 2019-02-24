@@ -8,10 +8,16 @@ type EnrollmentRequest struct {
 }
 
 type RequiredFormat struct {
-	Format string `json:"format"`
+	Format     string      `json:"format"`
+	Protection *Protection `json:"protection"`
 }
 
 type SubjectVariable struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
+}
+
+type Protection struct {
+	Type     string `json:"type"`
+	Password string `json:"password"`
 }

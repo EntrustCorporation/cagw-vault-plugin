@@ -3,9 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
@@ -13,21 +11,12 @@ import (
 	"net/http"
 )
 
-func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	csrPem := data.Get("csr").(string)
+func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	commonName := data.Get("common_name").(string)
 
 	if len(commonName) <= 0 {
 		return logical.ErrorResponse("common_name is empty"), nil
 	}
-
-	// Just decode a single block, omit any subsequent blocks
-	csrBlock, _ := pem.Decode([]byte(csrPem))
-	if csrBlock == nil {
-		return logical.ErrorResponse("CSR could not be decoded"), nil
-	}
-
-	csrBase64 := base64.StdEncoding.EncodeToString(csrBlock.Bytes)
 
 	configEntry, err := getConfigEntry(ctx, req)
 	if err != nil {
@@ -41,10 +30,12 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	enrollmentRequest := EnrollmentRequest{
 		ProfileId: profileName,
 		RequiredFormat: RequiredFormat{
-			Format:     "X509",
-			Protection: nil,
+			Format: "PKCS12",
+			Protection: &Protection{
+				Type:     "PasswordProtection",
+				Password: "ChangeMe2",
+			},
 		},
-		CSR: csrBase64,
 		SubjectVariables: []SubjectVariable{
 			{configProfileEntry.CommonNameVariable, commonName},
 		},
