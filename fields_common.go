@@ -31,9 +31,21 @@ exists.`,
 	}
 
 	fields["alt_names"] = &framework.FieldSchema{
-		Type: framework.TypeString,
+		Type: framework.TypeCommaStringSlice,
 		Description: `The requested Subject Alternative Names, if any,
 in a comma-delimited list.`,
+	}
+
+	fields["ip_sans"] = &framework.FieldSchema{
+		Type: framework.TypeCommaStringSlice,
+		Description: `The requested IP SANs, if any, in a
+comma-delimited list`,
+	}
+
+	fields["uri_sans"] = &framework.FieldSchema{
+		Type: framework.TypeCommaStringSlice,
+		Description: `The requested URI SANs, if any, in a
+comma-delimited list.`,
 	}
 
 	fields["ttl"] = &framework.FieldSchema{

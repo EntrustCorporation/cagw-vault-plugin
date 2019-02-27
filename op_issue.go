@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
+	"golang.org/x/crypto/pkcs12"
 	"io/ioutil"
 	"net/http"
 )
 
 func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	commonName := data.Get("common_name").(string)
+	format := data.Get("format").(string)
 
 	if len(commonName) <= 0 {
 		return logical.ErrorResponse("common_name is empty"), nil
@@ -85,8 +88,35 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		return logical.ErrorResponse("CAGW enrollment response could not be parsed: %v", err), err
 	}
 
-	respData := map[string]interface{}{
-		"certificate": enrollmentResponse.Enrollment.Body,
+	b.Logger().Debug(string(enrollmentResponse.Enrollment.Body))
+	p12 := enrollmentResponse.Enrollment.Body
+	if err != nil {
+		return logical.ErrorResponse("base64 could not be decoded: %v", err), err
+	}
+
+	blocks, err := pkcs12.ToPEM(p12, "ChangeMe2")
+	if err != nil {
+		return logical.ErrorResponse("PKCS12 could not be parsed: %v", err), err
+	}
+
+	respData := map[string]interface{}{}
+
+	switch format {
+	case "pem":
+		for _, block := range blocks {
+			b.Logger().Debug(fmt.Sprintf("Found block: %s", block.Type))
+			if block.Type == "CERTIFICATE" {
+				b.Logger().Debug("Found CERTIFICATE in P12")
+				respData["certificate"] = pem.EncodeToMemory(block)
+			}
+			if block.Type == "PRIVATE KEY" {
+				b.Logger().Debug("Found PRIVATE KEY in P12")
+				respData["private_key"] = pem.EncodeToMemory(block)
+			}
+		}
+
+	default:
+		return logical.ErrorResponse("Unsupported format: %s", format), nil
 	}
 
 	return &logical.Response{

@@ -11,16 +11,20 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	csrPem := data.Get("csr").(string)
-	commonName := data.Get("common_name").(string)
+	var err error
 
+	commonName := data.Get("common_name").(string)
 	if len(commonName) <= 0 {
 		return logical.ErrorResponse("common_name is empty"), nil
 	}
 
+	altNames := processAllAltNames(data, commonName)
+
+	csrPem := data.Get("csr").(string)
 	// Just decode a single block, omit any subsequent blocks
 	csrBlock, _ := pem.Decode([]byte(csrPem))
 	if csrBlock == nil {
@@ -37,6 +41,8 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	profileName := data.Get("profile").(string)
 	configProfileEntry, err := getProfileConfig(ctx, req, profileName)
 
+	ttl := getTTL(data, configProfileEntry)
+
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
 		ProfileId: profileName,
@@ -47,6 +53,10 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		CSR: csrBase64,
 		SubjectVariables: []SubjectVariable{
 			{configProfileEntry.CommonNameVariable, commonName},
+		},
+		SubjectAltNames: altNames,
+		OptionalCertificateRequestDetails: CertificateRequestDetails{
+			ValidityPeriod: fmt.Sprintf("P%dM", int64(ttl.Minutes())),
 		},
 	}
 
@@ -102,4 +112,15 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		Data: respData,
 	}, nil
 
+}
+
+func getTTL(data *framework.FieldData, configProfileEntry *CAGWConfigProfileEntry) time.Duration {
+	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
+	if ttl <= 0 {
+		ttl = configProfileEntry.TTL
+	}
+	if configProfileEntry.MaxTTL > 0 && ttl > configProfileEntry.MaxTTL {
+		ttl = configProfileEntry.MaxTTL
+	}
+	return ttl
 }

@@ -1,10 +1,12 @@
 package main
 
 type EnrollmentRequest struct {
-	ProfileId        string            `json:"profileId"`
-	RequiredFormat   RequiredFormat    `json:"requiredFormat"`
-	CSR              string            `json:"csr"`
-	SubjectVariables []SubjectVariable `json:"subjectVariables"`
+	ProfileId                         string                    `json:"profileId"`
+	RequiredFormat                    RequiredFormat            `json:"requiredFormat"`
+	CSR                               string                    `json:"csr"`
+	SubjectVariables                  []SubjectVariable         `json:"subjectVariables"`
+	SubjectAltNames                   []SubjectAltName          `json:"subjectAltNames"`
+	OptionalCertificateRequestDetails CertificateRequestDetails `json:"optionalCertificateRequestDetails"`
 }
 
 type RequiredFormat struct {
@@ -20,4 +22,13 @@ type SubjectVariable struct {
 type Protection struct {
 	Type     string `json:"type"`
 	Password string `json:"password"`
+}
+
+type SubjectAltName struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+type CertificateRequestDetails struct {
+	ValidityPeriod string `json:"validityPeriod"`
 }
