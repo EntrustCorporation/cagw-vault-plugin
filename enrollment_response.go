@@ -8,5 +8,5 @@ type EnrollmentResponse struct {
 type Enrollment struct {
 	Id     string `json:"id"`
 	Status string `json:"status"`
-	Body   []byte `json:"body"`
+	Body   string `json:"body"`
 }

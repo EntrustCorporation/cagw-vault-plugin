@@ -94,7 +94,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		return logical.ErrorResponse("base64 could not be decoded: %v", err), err
 	}
 
-	blocks, err := pkcs12.ToPEM(p12, "ChangeMe2")
+	blocks, err := pkcs12.ToPEM([]byte(p12), "ChangeMe2")
 	if err != nil {
 		return logical.ErrorResponse("PKCS12 could not be parsed: %v", err), err
 	}

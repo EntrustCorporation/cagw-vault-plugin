@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -16,6 +17,11 @@ import (
 
 func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	var err error
+
+	format, err := getFormat(data)
+	if err != nil {
+		return logical.ErrorResponse("%v", err), err
+	}
 
 	commonName := data.Get("common_name").(string)
 	if len(commonName) <= 0 {
@@ -104,14 +110,41 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		return logical.ErrorResponse("CAGW enrollment response could not be parsed: %v", err), err
 	}
 
-	respData := map[string]interface{}{
-		"certificate": enrollmentResponse.Enrollment.Body,
+	var respData map[string]interface{}
+	switch *format {
+	case "der":
+		respData = map[string]interface{}{
+			"certificate": enrollmentResponse.Enrollment.Body,
+		}
+
+	case "pem", "pem_bundle":
+		data, err := base64.StdEncoding.DecodeString(enrollmentResponse.Enrollment.Body)
+		if err != nil {
+			return logical.ErrorResponse("Error decoding base64 response from CAGW: %v", err), err
+		}
+		block := pem.Block{Type: "CERTIFICATE", Bytes: data}
+
+		respData = map[string]interface{}{
+			"certificate": string(pem.EncodeToMemory(&block)),
+		}
 	}
 
 	return &logical.Response{
 		Data: respData,
 	}, nil
 
+}
+
+func getFormat(data *framework.FieldData) (*string, error) {
+	format := data.Get("format").(string)
+	if len(format) <= 0 {
+		format = "pem"
+	}
+	if format != "pem" && format != "pem_bundle" && format != "der" {
+		return nil, errors.New(fmt.Sprintf("Invalid format specified: %s", format))
+	}
+
+	return &format, nil
 }
 
 func getTTL(data *framework.FieldData, configProfileEntry *CAGWConfigProfileEntry) time.Duration {

@@ -1,0 +1,47 @@
+
+// This defines the repository that Gradle uses to find plugins
+buildscript {
+    dependencies {
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.6.2'
+     }
+}
+
+// Activate the Artifactory plugin
+plugins {
+    id 'com.jfrog.artifactory' version '4.6.2'
+    id 'com.github.blindpirate.gogradle' version '0.11.3'
+}
+
+golang {
+    packagePath = 'cagw-vault-plugin'
+}
+
+dependencies {
+    golang {
+        build 'github.com/hashicorp/vault@1.0.3'
+    }
+}
+
+// Configure the Artifactory plugin
+artifactory {
+    contextUrl = artifactory_contextUrl   //The base Artifactory URL if not overridden by the publisher/resolver
+    // Configure publishing
+    publish {
+        repository {
+            repoKey = publish_repo_key
+            username = artifactory_user
+            password = artifactory_password
+            maven = true
+        }
+    }
+    // Configure dependency resolution
+    resolve {
+        repository {
+            repoKey = resolve_repo_key
+            username = artifactory_user
+            password = artifactory_password
+            maven = true
+        }
+    }
+}
+
