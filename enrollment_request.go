@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2019 Entrust Datacard Corporation.
+ * All rights reserved.
+ */
+
 package main
 
 type EnrollmentRequest struct {

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2019 Entrust Datacard Corporation.
+ * All rights reserved.
+ */
+
 package main
 
 import (
@@ -23,7 +28,8 @@ func Backend(conf *logical.BackendConfig) *backend {
 		Paths: []*framework.Path{
 			pathConfig(&b),
 			pathSign(&b),
-			pathIssue(&b),
+			// TODO - enable issuance endpoint when toolkit issue is addressed
+			// pathIssue(&b),
 			pathConfigProfile(&b),
 		},
 		PathsSpecial: &logical.Paths{
