@@ -4,6 +4,21 @@ The Entrust Datacard CA Gateway Vault plugin allows Vault to issue certificates 
 
 The plugin is designed to be a drop in replacement for Vault's built in PKI plugin.  But, currently only a subset of the functionality is implemented.
 
+## Build
+
+You can build the plugin using Gradle by executing the following command:
+
+Windows:
+```
+> gradlew.bat build
+```
+Linux:
+```
+# ./gradlew build
+```
+
+Currently, the build will only target the architecture of the host machine.
+
 ## Configuration
 
 You can configure the CA Gateway plugin by writing to the `/config` endpoint. The configuration accepts four properties:
