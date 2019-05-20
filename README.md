@@ -1,8 +1,13 @@
 # Entrust Datacard CA Gateway Vault plugin
 
-The Entrust Datacard CA Gateway Vault plugin allows Vault to issue certificates that come from the CA Gateway.
+The Entrust Datacard CA Gateway Vault plugin allows Vault to issue certificates that come through the CA Gateway from the underlying exernal Certificate Authority.
+Vault comes with a built-in CA as part of its Secrets Engine, but using that internal CA will often not meet regulatory or company security requirements.  If this is the case, then you have two options:
+* Use the Vault provisions to root to an external CA rather than self-sign its own CA certificate,
+* Or, plug into your own issuing CA.
 
-The plugin is designed to be a drop in replacement for Vault's built in PKI plugin.  But, currently only a subset of the functionality is implemented.
+Doing the latter has the advantage that the certificates you create will be visible in the Entrust Datacard management console and subject to the policies and controls set up by your organization.  This CA may be either one that you self-manage and host in your own private/public cloud or one that is managed and hosted by Entrust Datacard.
+
+The plugin is designed to be a drop in replacement for Vault's built in PKI plugin, implementing the capability necessary to support the certificate issuance.
 
 ## Build
 
