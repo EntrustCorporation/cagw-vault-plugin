@@ -26,15 +26,28 @@ Currently, the build will only target the architecture of the host machine.
 
 ## Configuration
 
-You can configure the CA Gateway plugin by writing to the `/config` endpoint. The configuration accepts four properties:
-* pem_bundle - The certificate and key to login to the CA Gateway with in PEM format.
-* caid - The CA identifier of the CA to user
-* url - The URL for the CA Gateway server including the context path.
-* cacerts - The complete certificate chain for the CA in PEM format.
+### Base Configuration
 
-### Example
+You can configure the CA Gateway plugin by writing to the `/config` endpoint. The configuration accepts four properties:
+* **pem_bundle** - The certificate and key to login to the CA Gateway with in PEM format.
+* **caid** - The CA identifier of the CA to user
+* **url** - The URL for the CA Gateway server including the context path.
+* **cacerts** - The complete certificate chain for the CA in PEM format.
+
+#### Example
 >`vault write pki/config pem_bundle=@user.pem caid=CA_1001 url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
 
+### Profile Configuration
+
+
+
+* **common_name_variable** - The name of the subject variable to used to supply the common name to the gateway. The default is 'cn'.
+* **ttl** - The lease duration if no specific lease duration is requested. The lease duration controls the expiration of certificates issued by this backend. Defaults to the value of max_ttl.  Value is in seconds.
+* **max_ttl** - The maximum allowed lease duration. Value is in seconds.
+
+#### Example
+
+>`vault write pki/config/profiles/PROF-101 common_name=cn ttl=15552000 31104000`
 
 ## Usage
 
