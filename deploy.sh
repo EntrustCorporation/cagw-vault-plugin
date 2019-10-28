@@ -2,7 +2,7 @@
 
 echo "Plugin directory: $VAULT_PLUGIN_DIR"
 
-sudo cp .gogradle/cagw-vault-plugin-* $VAULT_PLUGIN_DIR/cagw-vault-plugin
+sudo cp cagw-vault-plugin $VAULT_PLUGIN_DIR/cagw-vault-plugin
 
 hash=`shasum -a 256 $VAULT_PLUGIN_DIR/cagw-vault-plugin | awk '{ print $1 }'`
 

@@ -11,18 +11,33 @@ The plugin is designed to be a drop in replacement for Vault's built in PKI plug
 
 ## Build
 
-You can build the plugin using Gradle by executing the following command:
+You can build the plugin using Go by executing the following command in the project directory:
 
-Windows:
 ```
-> gradlew.bat build
-```
-Linux:
-```
-# ./gradlew build
+> go build -o cagw-vault-plugin
 ```
 
-Currently, the build will only target the architecture of the host machine.
+This will build the plugin and store the resulting executable as `cagw_vault_plugin`
+
+The Go programming language can be downloaded from here: https://golang.org/dl/
+
+General information about using Go can be found at: https://golang.org/
+
+Information on building Go modules can be found here: https://github.com/golang/go/wiki/Modules
+
+## Installation
+
+The CAGW Vault plugin is install like any normal Vault plugin. First the plugin executable must be copied to the Vault 
+plugin directory. Then the plugin must be registered with a command like the following:
+
+```
+> vault write sys/plugins/catalog/cagw-vault-plugin sha256=$hash command="cagw-vault-plugin"
+```
+
+`$hash` must be the SHA256 of the CAGW Vault plugin executable. An example of how to compute the hash and install the 
+plugin can be found in the `deploy.sh` file in this repo.
+
+More information about Vault plugins can be found here: https://vaultproject.io/docs/internals/plugins.html
 
 ## Configuration
 
@@ -38,8 +53,6 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 >`vault write pki/config pem_bundle=@user.pem caid=CA_1001 url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
 
 ### Profile Configuration
-
-
 
 * **common_name_variable** - The name of the subject variable to used to supply the common name to the gateway. The default is 'cn'.
 * **ttl** - The lease duration if no specific lease duration is requested. The lease duration controls the expiration of certificates issued by this backend. Defaults to the value of max_ttl.  Value is in seconds.
