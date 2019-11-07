@@ -67,7 +67,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		},
 		SubjectAltNames: altNames,
 		OptionalCertificateRequestDetails: CertificateRequestDetails{
-			ValidityPeriod: fmt.Sprintf("P%dM", int64(ttl.Minutes())),
+			ValidityPeriod: fmt.Sprintf("PT%dM", int64(ttl.Minutes())),
 		},
 	}
 
