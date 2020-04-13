@@ -64,6 +64,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
 	}
 

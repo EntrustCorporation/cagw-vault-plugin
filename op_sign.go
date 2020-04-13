@@ -86,6 +86,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	}
 
 	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
 	}
 
