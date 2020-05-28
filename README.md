@@ -60,7 +60,7 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 
 #### Example
 
->`vault write pki/config/profiles/PROF-101 common_name=cn ttl=15552000 31104000`
+>`vault write pki/config/profiles/PROF-101 common_name=cn ttl=15552000 max_ttl=31104000`
 
 ## Usage
 
