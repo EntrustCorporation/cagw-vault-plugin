@@ -8,14 +8,16 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 	"golang.org/x/crypto/pkcs12"
-	"io/ioutil"
-	"net/http"
 )
 
 func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -64,7 +66,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
 	}
 
@@ -95,7 +97,8 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	b.Logger().Debug(string(enrollmentResponse.Enrollment.Body))
-	p12 := enrollmentResponse.Enrollment.Body
+	base64P12 := enrollmentResponse.Enrollment.Body
+	p12, err := base64.StdEncoding.DecodeString(base64P12)
 	if err != nil {
 		return logical.ErrorResponse("base64 could not be decoded: %v", err), err
 	}
