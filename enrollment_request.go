@@ -8,7 +8,7 @@ package main
 type EnrollmentRequest struct {
 	ProfileId                         string                    `json:"profileId"`
 	RequiredFormat                    RequiredFormat            `json:"requiredFormat"`
-	CSR                               string                    `json:"csr"`
+	CSR                               string                    `json:"csr,omitempty"`
 	SubjectVariables                  []SubjectVariable         `json:"subjectVariables"`
 	SubjectAltNames                   []SubjectAltName          `json:"subjectAltNames"`
 	OptionalCertificateRequestDetails CertificateRequestDetails `json:"optionalCertificateRequestDetails"`
