@@ -54,11 +54,11 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 
 >`vault read pki/config`
 
->`vault read -field=CACerts cagw/config`
+>`vault read -field=CACerts pki/config`
 
->`vault read -field=URL cagw/config`
+>`vault read -field=URL pki/config`
 
->`vault read -field=CaId cagw/config`
+>`vault read -field=CaId pki/config`
 
 ### Profile Configuration
 
