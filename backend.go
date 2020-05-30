@@ -29,8 +29,7 @@ func Backend(conf *logical.BackendConfig) *backend {
 		Paths: []*framework.Path{
 			pathConfig(&b),
 			pathSign(&b),
-			// TODO - enable issuance endpoint when toolkit issue is addressed
-			// pathIssue(&b),
+			pathIssue(&b),
 			pathConfigProfile(&b),
 		},
 		PathsSpecial: &logical.Paths{

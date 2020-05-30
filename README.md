@@ -77,3 +77,7 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 To issue a new certificate, write a CSR and common name to the sign endpoint with the profile identifier at the end of the path.
 
 >`vault write pki/sign/CA-PROF-1001 csr=@csr.pem common_name=example.com`
+
+To issue a new PKCS12 (generate the private key with the certificate), write a common name to the issue endpoint with the profile identifier at the end of the path.
+
+>`vault write pki/issue/CA-PROF-1002 common_name=example.com`
