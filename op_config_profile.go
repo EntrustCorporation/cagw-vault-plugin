@@ -7,9 +7,10 @@ package main
 
 import (
 	"context"
+	"time"
+
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
-	"time"
 )
 
 func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -17,7 +18,7 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 	maxTtl := time.Duration(data.Get("max_ttl").(int)) * time.Second
 	commonNameVar := data.Get("common_name_variable").(string)
 
-	profileId := req.GetString("profile")
+	profileID := data.Get("profile").(string)
 
 	entry := &CAGWConfigProfileEntry{
 		commonNameVar,
@@ -25,7 +26,7 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 		maxTtl,
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/profile/"+profileId, entry)
+	storageEntry, err := logical.StorageEntryJSON("config/profile/"+profileID, entry)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry"), err
@@ -44,4 +45,34 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 	return &logical.Response{
 		Data: respData,
 	}, nil
+}
+
+func (b *backend) opReadConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+
+	profileID := data.Get("profile").(string)
+
+	if len(profileID) == 0 {
+		return logical.ErrorResponse("missing the profile ID"), nil
+	}
+
+	storageEntry, err := req.Storage.Get(ctx, "config/profile/"+profileID)
+	if err != nil {
+		return logical.ErrorResponse("could not read configuration"), err
+	}
+	if storageEntry == nil {
+		return logical.ErrorResponse("could not find configuration"), nil
+	}
+
+	var rawData map[string]interface{}
+	error := storageEntry.DecodeJSON(&rawData)
+
+	if error != nil {
+		return logical.ErrorResponse("json decoding failed"), err
+	}
+
+	resp := &logical.Response{
+		Data: rawData,
+	}
+
+	return resp, nil
 }

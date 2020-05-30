@@ -52,6 +52,14 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 #### Example
 >`vault write pki/config pem_bundle=@user.pem caid=CA_1001 url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
 
+>`vault read pki/config`
+
+>`vault read -field=CACerts pki/config`
+
+>`vault read -field=URL pki/config`
+
+>`vault read -field=CaId pki/config`
+
 ### Profile Configuration
 
 * **common_name_variable** - The name of the subject variable to used to supply the common name to the gateway. The default is 'cn'.
@@ -61,6 +69,8 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 #### Example
 
 >`vault write pki/config/profiles/PROF-101 common_name=cn ttl=15552000 max_ttl=31104000`
+
+>`vault read pki/config/profiles/PROF-101`
 
 ## Usage
 
