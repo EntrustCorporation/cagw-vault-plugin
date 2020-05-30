@@ -15,6 +15,7 @@ func pathConfig(b *backend) *framework.Path {
 		Pattern: "config",
 
 		Operations: map[logical.Operation]framework.OperationHandler{
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfig},
 			logical.UpdateOperation: &framework.PathOperation{Callback: b.opConfig},
 		},
 

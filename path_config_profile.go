@@ -15,12 +15,18 @@ func pathConfigProfile(b *backend) *framework.Path {
 		Pattern: "config/profiles/" + framework.GenericNameRegex("profile"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfigProfile},
 			logical.UpdateOperation: &framework.PathOperation{Callback: b.opConfigProfile},
 		},
 
 		HelpSynopsis:    "CAGW Profile Configuration",
 		HelpDescription: "Configures CAGW parameters for a profile (role)",
-		Fields:          map[string]*framework.FieldSchema{},
+		Fields: map[string]*framework.FieldSchema{
+			"profile": {
+				Type:        framework.TypeString,
+				Description: "Specifies the certificates profile.",
+			},
+		},
 	}
 
 	ret.Fields["common_name_variable"] = &framework.FieldSchema{

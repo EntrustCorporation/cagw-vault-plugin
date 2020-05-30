@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 )
@@ -57,4 +58,25 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 	return &logical.Response{
 		Data: respData,
 	}, nil
+}
+
+func (b *backend) opReadConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+
+	storageEntry, err := req.Storage.Get(ctx, "config/cagw")
+	if err != nil {
+		return logical.ErrorResponse("could not read configuration"), err
+	}
+
+	var rawData map[string]interface{}
+	error := storageEntry.DecodeJSON(&rawData)
+
+	if error != nil {
+		return logical.ErrorResponse("json decoding failed"), err
+	}
+
+	resp := &logical.Response{
+		Data: rawData,
+	}
+
+	return resp, nil
 }
