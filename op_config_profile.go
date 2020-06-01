@@ -7,26 +7,22 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 )
 
 func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
-	maxTtl := time.Duration(data.Get("max_ttl").(int)) * time.Second
-	commonNameVar := data.Get("common_name_variable").(string)
 
-	profileID := data.Get("profile").(string)
+	id := data.Get("profile").(string)
+	profileID := CAGWProfileID{id}
+	entry, err := profileID.Entry(ctx, req, data)
 
-	entry := &CAGWConfigProfileEntry{
-		commonNameVar,
-		ttl,
-		maxTtl,
+	if err != nil {
+		return logical.ErrorResponse("Error retrieving the profile properties from CAGW"), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/profile/"+profileID, entry)
+	storageEntry, err := logical.StorageEntryJSON("config/profile/"+id, entry)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry"), err
@@ -38,8 +34,11 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 	}
 
 	respData := map[string]interface{}{
-		"Message":            "Configuration successful",
-		"CommonVariableName": commonNameVar,
+		"Message":                       "Configuration successful",
+		"Profile ID":                    entry.Id,
+		"Profile Name":                  entry.Name,
+		"Subject Variable Requirements": entry.SubjectVariableRequirements,
+		"Subject Alt Name Requirements": entry.SubjectAltNameRequirements,
 	}
 
 	return &logical.Response{
@@ -64,9 +63,9 @@ func (b *backend) opReadConfigProfile(ctx context.Context, req *logical.Request,
 	}
 
 	var rawData map[string]interface{}
-	error := storageEntry.DecodeJSON(&rawData)
+	err = storageEntry.DecodeJSON(&rawData)
 
-	if error != nil {
+	if err != nil {
 		return logical.ErrorResponse("json decoding failed"), err
 	}
 

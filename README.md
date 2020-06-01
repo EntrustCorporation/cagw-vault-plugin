@@ -62,22 +62,25 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 
 ### Profile Configuration
 
-* **common_name_variable** - The name of the subject variable to used to supply the common name to the gateway. The default is 'cn'.
 * **ttl** - The lease duration if no specific lease duration is requested. The lease duration controls the expiration of certificates issued by this backend. Defaults to the value of max_ttl.  Value is in seconds.
 * **max_ttl** - The maximum allowed lease duration. Value is in seconds.
 
 #### Example
 
->`vault write pki/config/profiles/PROF-101 common_name=cn ttl=15552000 max_ttl=31104000`
+>`vault write pki/config/profiles/PROF-101 ttl=15552000 max_ttl=31104000`
+
+The profile write operation will connect to CAGW to get the profile properties. The profile properties include the subject variable requirements and subject alternative name requirements if available. These requirements must be provided for the sign or issue operations. The read operation will display these properties.
 
 >`vault read pki/config/profiles/PROF-101`
 
 ## Usage
 
-To issue a new certificate, write a CSR and common name to the sign endpoint with the profile identifier at the end of the path.
+* **subject_variables** - A comma separated list of the subject variable types and values to use. The types should match with the profile configuration.
 
->`vault write pki/sign/CA-PROF-1001 csr=@csr.pem common_name=example.com`
+To issue a new certificate, write a CSR and subject variables to the sign endpoint with the profile identifier at the end of the path.
 
-To issue a new PKCS12 (generate the private key with the certificate), write a common name to the issue endpoint with the profile identifier at the end of the path.
+>`vault write pki/sign/CA-PROF-1001 csr=@csr.pem subject_variables=cn=example.com,o=Entrust,c=CA`
 
->`vault write pki/issue/CA-PROF-1002 common_name=example.com`
+To issue a new PKCS12 (generate the private key with the certificate), write subject variables to the issue endpoint with the profile identifier at the end of the path.
+
+>`vault write pki/issue/CA-PROF-1002 subject_variables=cn=example.com,o=Entrust,c=CA`

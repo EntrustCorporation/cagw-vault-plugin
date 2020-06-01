@@ -12,12 +12,13 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/hashicorp/vault/logical"
-	"github.com/hashicorp/vault/logical/framework"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/vault/logical"
+	"github.com/hashicorp/vault/logical/framework"
+	"github.com/pkg/errors"
 )
 
 func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -28,12 +29,14 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		return logical.ErrorResponse("%v", err), err
 	}
 
-	commonName := data.Get("common_name").(string)
-	if len(commonName) <= 0 {
-		return logical.ErrorResponse("common_name is empty"), nil
+	// Comma separated list of subject variables: cn=Test,o=Entrust,c=CA
+	subjectVariables := data.Get("subject_variables").(string)
+	if len(subjectVariables) <= 0 {
+		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
 
-	altNames := processAllAltNames(data, commonName)
+	subjectVars := processSubjectVariables(subjectVariables)
+	altNames := processAllAltNames(data, subjectVariables)
 
 	csrPem := data.Get("csr").(string)
 	// Just decode a single block, omit any subsequent blocks
@@ -61,11 +64,9 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 			Format:     "X509",
 			Protection: nil,
 		},
-		CSR: csrBase64,
-		SubjectVariables: []SubjectVariable{
-			{configProfileEntry.CommonNameVariable, commonName},
-		},
-		SubjectAltNames: altNames,
+		CSR:              csrBase64,
+		SubjectVariables: subjectVars,
+		SubjectAltNames:  altNames,
 		OptionalCertificateRequestDetails: CertificateRequestDetails{
 			ValidityPeriod: fmt.Sprintf("PT%dM", int64(ttl.Minutes())),
 		},
@@ -86,7 +87,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	}
 
 	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
 	}
 
@@ -153,7 +154,7 @@ func getFormat(data *framework.FieldData) (*string, error) {
 	return &format, nil
 }
 
-func getTTL(data *framework.FieldData, configProfileEntry *CAGWConfigProfileEntry) time.Duration {
+func getTTL(data *framework.FieldData, configProfileEntry *CAGWProfileEntry) time.Duration {
 	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
 	if ttl <= 0 {
 		ttl = configProfileEntry.TTL

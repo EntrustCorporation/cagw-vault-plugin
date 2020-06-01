@@ -21,12 +21,14 @@ import (
 )
 
 func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	commonName := data.Get("common_name").(string)
+	subjectVariables := data.Get("subject_variables").(string)
 	format := data.Get("format").(string)
 
-	if len(commonName) <= 0 {
-		return logical.ErrorResponse("common_name is empty"), nil
+	if len(subjectVariables) <= 0 {
+		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
+
+	subjectVars := processSubjectVariables(subjectVariables)
 
 	configEntry, err := getConfigEntry(ctx, req)
 	if err != nil {
@@ -34,7 +36,6 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	profileName := data.Get("profile").(string)
-	configProfileEntry, err := getProfileConfig(ctx, req, profileName)
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
@@ -46,9 +47,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 				Password: "ChangeMe2",
 			},
 		},
-		SubjectVariables: []SubjectVariable{
-			{configProfileEntry.CommonNameVariable, commonName},
-		},
+		SubjectVariables: subjectVars,
 	}
 
 	body, err := json.Marshal(enrollmentRequest)
