@@ -29,13 +29,6 @@ func pathConfigProfile(b *backend) *framework.Path {
 		},
 	}
 
-	ret.Fields["common_name_variable"] = &framework.FieldSchema{
-		Type:    framework.TypeString,
-		Default: "cn",
-		Description: "The name of the subject variable to used to supply the common " +
-			"name to the gateway.",
-	}
-
 	ret.Fields["ttl"] = &framework.FieldSchema{
 		Type: framework.TypeDurationSecond,
 		Description: "The lease duration if no specific lease duration is requested. " +

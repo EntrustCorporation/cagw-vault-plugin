@@ -68,9 +68,9 @@ func (b *backend) opReadConfig(ctx context.Context, req *logical.Request, data *
 	}
 
 	var rawData map[string]interface{}
-	error := storageEntry.DecodeJSON(&rawData)
+	err = storageEntry.DecodeJSON(&rawData)
 
-	if error != nil {
+	if err != nil {
 		return logical.ErrorResponse("json decoding failed"), err
 	}
 

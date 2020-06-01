@@ -25,14 +25,11 @@ key and issuing cert will be appended to the
 certificate pem. Defaults to "pem".`,
 	}
 
-	fields["common_name"] = &framework.FieldSchema{
+	fields["subject_variables"] = &framework.FieldSchema{
 		Type: framework.TypeString,
-		Description: `The requested common name; this name will be
-used as the subject variable value for the 
-subject variable type specified in the 
-common_name_variable in the  profile's 
-configuration or "cn" if no profile config
-exists.`,
+		Description: `The requested subject variables; this is a comma separated list
+of subject variable types and values. The types should match the profile's
+configuration.`,
 	}
 
 	fields["alt_names"] = &framework.FieldSchema{
