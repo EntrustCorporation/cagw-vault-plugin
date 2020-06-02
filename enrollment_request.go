@@ -35,5 +35,5 @@ type SubjectAltName struct {
 }
 
 type CertificateRequestDetails struct {
-	ValidityPeriod string `json:"validityPeriod"`
+	ValidityPeriod string `json:"validityPeriod,omitempty"`
 }
