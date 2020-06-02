@@ -26,5 +26,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
+	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
 )
