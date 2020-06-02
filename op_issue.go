@@ -8,27 +8,39 @@ package main
 import (
 	"bytes"
 	"context"
+
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
-	"golang.org/x/crypto/pkcs12"
+	"software.sslmate.com/src/go-pkcs12"
 )
 
 func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	subjectVariables := data.Get("subject_variables").(string)
 	format := data.Get("format").(string)
 
+	if strings.EqualFold(format, "pem") != true {
+		return logical.ErrorResponse("Unsupported format: %s", format), nil
+	}
+
 	if len(subjectVariables) <= 0 {
 		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
 
-	subjectVars := processSubjectVariables(subjectVariables)
+	subjectVars, err := processSubjectVariables(subjectVariables)
+	if err != nil {
+		return logical.ErrorResponse("Failed parsing the subject_variables"), err
+	}
 
 	configEntry, err := getConfigEntry(ctx, req)
 	if err != nil {
@@ -102,33 +114,63 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		return logical.ErrorResponse("base64 could not be decoded: %v", err), err
 	}
 
-	blocks, err := pkcs12.ToPEM([]byte(p12), "ChangeMe2")
+	respData, err := Pkcs12ToPem(p12, "ChangeMe2")
+
 	if err != nil {
-		return logical.ErrorResponse("PKCS12 could not be parsed: %v", err), err
-	}
-
-	respData := map[string]interface{}{}
-
-	switch format {
-	case "pem":
-		for _, block := range blocks {
-			b.Logger().Debug(fmt.Sprintf("Found block: %s", block.Type))
-			if block.Type == "CERTIFICATE" {
-				b.Logger().Debug("Found CERTIFICATE in P12")
-				respData["certificate"] = pem.EncodeToMemory(block)
-			}
-			if block.Type == "PRIVATE KEY" {
-				b.Logger().Debug("Found PRIVATE KEY in P12")
-				respData["private_key"] = pem.EncodeToMemory(block)
-			}
-		}
-
-	default:
-		return logical.ErrorResponse("Unsupported format: %s", format), nil
+		return logical.ErrorResponse("error parsing the PKCS12: %v", err), err
 	}
 
 	return &logical.Response{
 		Data: respData,
 	}, nil
 
+}
+
+func Pkcs12ToPem(p12 []byte, password string) (map[string]interface{}, error) {
+	privateKey, certificate, caCerts, err := pkcs12.DecodeChain([]byte(p12), password)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding PKCS12: %s", err)
+	}
+
+	respData := map[string]interface{}{}
+
+	var keyPemBlock *pem.Block
+	switch k := privateKey.(type) {
+	case *rsa.PrivateKey:
+		keyBytes := x509.MarshalPKCS1PrivateKey(k)
+		keyPemBlock = &pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: keyBytes,
+		}
+	case *ecdsa.PrivateKey:
+		keyBytes, err := x509.MarshalECPrivateKey(k)
+		if err != nil {
+			return nil, fmt.Errorf("error encoding EC key to PEM: %s", err)
+		}
+		keyPemBlock = &pem.Block{
+			Type:  "EC PRIVATE KEY",
+			Bytes: keyBytes,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported private key type")
+	}
+	respData["private_key"] = string(pem.EncodeToMemory(keyPemBlock))
+
+	var certPemBlock *pem.Block = &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certificate.Raw,
+	}
+	respData["certificate"] = string(pem.EncodeToMemory(certPemBlock))
+
+	var caCertsBlocks string
+	for _, c := range caCerts {
+		var caCertPemBlock *pem.Block = &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: c.Raw,
+		}
+		caCertsBlocks = caCertsBlocks + "\n" + string(pem.EncodeToMemory(caCertPemBlock))
+	}
+	respData["chain"] = caCertsBlocks
+
+	return respData, nil
 }

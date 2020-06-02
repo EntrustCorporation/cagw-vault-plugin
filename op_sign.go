@@ -35,7 +35,11 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
 
-	subjectVars := processSubjectVariables(subjectVariables)
+	subjectVars, err := processSubjectVariables(subjectVariables)
+	if err != nil {
+		return logical.ErrorResponse("Failed parsing the subject_variables"), err
+	}
+
 	altNames := processAllAltNames(data, subjectVariables)
 
 	csrPem := data.Get("csr").(string)

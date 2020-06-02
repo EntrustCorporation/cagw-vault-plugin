@@ -6,22 +6,25 @@
 package main
 
 import (
-	"log"
-	"strings"
+	"fmt"
+
+	"gopkg.in/ldap.v2"
 )
 
-func processSubjectVariables(subjectVar string) []SubjectVariable {
-	vars := strings.Split(subjectVar, ",")
+func processSubjectVariables(subjectVars string) ([]SubjectVariable, error) {
+	dn, err := ldap.ParseDN(subjectVars)
 
-	var subjectVariables []SubjectVariable
-	for _, v := range vars {
-		typeValue := strings.SplitN(v, "=", 2)
-		if len(typeValue) != 2 {
-			log.Printf("Invalid subject variable: %s. Subject variables must use = to separate type from value.", v)
-			continue
-		}
-		subjectVariables = append(subjectVariables, SubjectVariable{typeValue[0], typeValue[1]})
+	if err != nil {
+		return nil, fmt.Errorf("error parsing the subject variables: %s", err)
 	}
 
-	return subjectVariables
+	var subjectVariables []SubjectVariable
+	for _, v := range (*dn).RDNs {
+		var attributes []*ldap.AttributeTypeAndValue = v.Attributes
+		for _, a := range attributes {
+			subjectVariables = append(subjectVariables, SubjectVariable{a.Type, a.Value})
+		}
+	}
+
+	return subjectVariables, nil
 }
