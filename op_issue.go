@@ -42,12 +42,24 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		return logical.ErrorResponse("Failed parsing the subject_variables"), err
 	}
 
+	altNames := data.Get("alt_names").([]string)
+	var subjAltNames []SubjectAltName
+	if len(altNames) > 0 {
+		subjAltNames, err = processSubjectAltNames(altNames)
+		if err != nil {
+			return logical.ErrorResponse("Failed parsing the subject alt names: %s", altNames), err
+		}
+	}
+
 	configEntry, err := getConfigEntry(ctx, req)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
 	profileName := data.Get("profile").(string)
+	configProfileEntry, err := getProfileConfig(ctx, req, profileName)
+
+	ttl := getTTL(data, configProfileEntry)
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
@@ -60,6 +72,10 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 			},
 		},
 		SubjectVariables: subjectVars,
+		SubjectAltNames:  subjAltNames,
+		OptionalCertificateRequestDetails: CertificateRequestDetails{
+			ValidityPeriod: fmt.Sprintf("PT%dM", int64(ttl.Minutes())),
+		},
 	}
 
 	body, err := json.Marshal(enrollmentRequest)

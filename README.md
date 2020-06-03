@@ -84,3 +84,12 @@ To issue a new certificate, write a CSR and subject variables to the sign endpoi
 To issue a new PKCS12 (generate the private key with the certificate), write subject variables to the issue endpoint with the profile identifier at the end of the path.
 
 >`vault write pki/issue/CA-PROF-1002 subject_variables=cn=example.com,o=Entrust,c=CA`
+
+Subject variables can be template variables as defined in the profile.
+
+>`vault write pki/issue/CA-PROF-1002 subject_variables="firstname=Atul,lastname=Gawande"`
+
+Subject alternative names can be provided in a comma-separated list. Each SAN must have the type and value separated by the
+equal sign.
+
+>`vault write pki/issue/CA-PROF-1002 subject_variables="firstname=Tim,lastname=Marshal" alt_names="dNSName=www.entrust.com,iPAddress=10.10.10.10,rfc822Name=tim@enttrust.com"`

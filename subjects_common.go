@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/ldap.v2"
 )
@@ -27,4 +28,18 @@ func processSubjectVariables(subjectVars string) ([]SubjectVariable, error) {
 	}
 
 	return subjectVariables, nil
+}
+
+func processSubjectAltNames(subjectAltNames []string) ([]SubjectAltName, error) {
+	var altNames []SubjectAltName
+
+	for _, tv := range subjectAltNames {
+		out := strings.SplitN(tv, "=", 2)
+		if len(out) != 2 {
+			return nil, fmt.Errorf("error parsing the subject alt names: %s", subjectAltNames)
+		}
+		altNames = append(altNames, SubjectAltName{Type: out[0], Value: out[1]})
+	}
+
+	return altNames, nil
 }

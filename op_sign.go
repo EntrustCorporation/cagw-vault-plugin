@@ -31,16 +31,22 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 
 	// Comma separated list of subject variables: cn=Test,o=Entrust,c=CA
 	subjectVariables := data.Get("subject_variables").(string)
-	if len(subjectVariables) <= 0 {
-		return logical.ErrorResponse("subject_variables is empty"), nil
+	var subjectVars []SubjectVariable
+	if len(subjectVariables) > 0 {
+		subjectVars, err = processSubjectVariables(subjectVariables)
+		if err != nil {
+			return logical.ErrorResponse("Failed parsing the subject_variables"), err
+		}
 	}
 
-	subjectVars, err := processSubjectVariables(subjectVariables)
-	if err != nil {
-		return logical.ErrorResponse("Failed parsing the subject_variables"), err
+	altNames := data.Get("alt_names").([]string)
+	var subjAltNames []SubjectAltName
+	if len(altNames) > 0 {
+		subjAltNames, err = processSubjectAltNames(altNames)
+		if err != nil {
+			return logical.ErrorResponse("Failed parsing the subject alt names: %s", altNames), err
+		}
 	}
-
-	altNames := processAllAltNames(data, subjectVariables)
 
 	csrPem := data.Get("csr").(string)
 	// Just decode a single block, omit any subsequent blocks
@@ -70,7 +76,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		},
 		CSR:              csrBase64,
 		SubjectVariables: subjectVars,
-		SubjectAltNames:  altNames,
+		SubjectAltNames:  subjAltNames,
 		OptionalCertificateRequestDetails: CertificateRequestDetails{
 			ValidityPeriod: fmt.Sprintf("PT%dM", int64(ttl.Minutes())),
 		},
