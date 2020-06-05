@@ -10,6 +10,6 @@ echo "SHA256: $hash"
 
 vault write sys/plugins/catalog/cagw-vault-plugin sha256=$hash command="cagw-vault-plugin"
 
-vault secrets enable -path=pki cagw-vault-plugin
+vault secrets enable -path=cagw cagw-vault-plugin
 
 echo "Done."
