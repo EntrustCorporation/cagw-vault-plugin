@@ -8,6 +8,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"math/big"
 
 	"crypto/ecdsa"
 	"crypto/rsa"
@@ -26,6 +27,9 @@ import (
 )
 
 func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	profileId := data.Get("profile").(string)
+	caId := data.Get("caId").(string)
+
 	subjectVariables := data.Get("subject_variables").(string)
 	format := data.Get("format").(string)
 
@@ -51,19 +55,18 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		}
 	}
 
-	configEntry, err := getConfigEntry(ctx, req)
+	configEntry, err := getConfigEntry(ctx, req, caId)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
-	profileName := data.Get("profile").(string)
-	configProfileEntry, err := getProfileConfig(ctx, req, profileName)
+	configProfileEntry, err := getProfileConfig(ctx, req, caId, profileId)
 
 	ttl := getTTL(data, configProfileEntry)
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
-		ProfileId: profileName,
+		ProfileId: profileId,
 		RequiredFormat: RequiredFormat{
 			Format: "PKCS12",
 			Protection: &Protection{
@@ -98,7 +101,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Post(configEntry.URL+"/v1/certificate-authorities/"+configEntry.CaId+"/enrollments", "application/json", bytes.NewReader(body))
+	resp, err := client.Post(configEntry.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return logical.ErrorResponse("Error response: %v", err), err
 	}
@@ -134,6 +137,17 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 
 	if err != nil {
 		return logical.ErrorResponse("error parsing the PKCS12: %v", err), err
+	}
+
+	storageEntry, err := logical.StorageEntryJSON("certs/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+
+	if err != nil {
+		return logical.ErrorResponse("error creating certificate storage entry"), err
+	}
+
+	err = req.Storage.Put(ctx, storageEntry)
+	if err != nil {
+		return logical.ErrorResponse("could not store certificate"), err
 	}
 
 	return &logical.Response{
@@ -177,6 +191,8 @@ func Pkcs12ToPem(p12 []byte, password string) (map[string]interface{}, error) {
 		Bytes: certificate.Raw,
 	}
 	respData["certificate"] = string(pem.EncodeToMemory(certPemBlock))
+
+	respData["serial_number"] = certificate.SerialNumber
 
 	var caCertsBlocks string
 	for _, c := range caCerts {

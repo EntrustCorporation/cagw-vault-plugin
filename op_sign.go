@@ -8,20 +8,24 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
-	"time"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
-	"github.com/pkg/errors"
 )
 
 func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+
+	caId := data.Get("caId").(string)
+	profileId := data.Get("profile").(string)
+
 	var err error
 
 	format, err := getFormat(data)
@@ -57,19 +61,18 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 
 	csrBase64 := base64.StdEncoding.EncodeToString(csrBlock.Bytes)
 
-	configEntry, err := getConfigEntry(ctx, req)
+	configEntry, err := getConfigEntry(ctx, req, caId)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
-	profileName := data.Get("profile").(string)
-	configProfileEntry, err := getProfileConfig(ctx, req, profileName)
+	configProfileEntry, err := getProfileConfig(ctx, req, caId, profileId)
 
 	ttl := getTTL(data, configProfileEntry)
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
-		ProfileId: profileName,
+		ProfileId: profileId,
 		RequiredFormat: RequiredFormat{
 			Format:     "X509",
 			Protection: nil,
@@ -102,7 +105,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Post(configEntry.URL+"/v1/certificate-authorities/"+configEntry.CaId+"/enrollments", "application/json", bytes.NewReader(body))
+	resp, err := client.Post(configEntry.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return logical.ErrorResponse("Error response: %v", err), err
 	}
@@ -141,36 +144,30 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		}
 		block := pem.Block{Type: "CERTIFICATE", Bytes: data}
 
-		respData = map[string]interface{}{
-			"certificate": string(pem.EncodeToMemory(&block)),
+		certificate, err := x509.ParseCertificate(data)
+		if err != nil {
+			return logical.ErrorResponse("Failed to parse the certificate: %v", err), err
 		}
+
+		respData = map[string]interface{}{
+			"certificate":   string(pem.EncodeToMemory(&block)),
+			"serial_number": certificate.SerialNumber,
+		}
+	}
+
+	storageEntry, err := logical.StorageEntryJSON("certs/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+
+	if err != nil {
+		return logical.ErrorResponse("error creating certificate storage entry"), err
+	}
+
+	err = req.Storage.Put(ctx, storageEntry)
+	if err != nil {
+		return logical.ErrorResponse("could not store certificate"), err
 	}
 
 	return &logical.Response{
 		Data: respData,
 	}, nil
 
-}
-
-func getFormat(data *framework.FieldData) (*string, error) {
-	format := data.Get("format").(string)
-	if len(format) <= 0 {
-		format = "pem"
-	}
-	if format != "pem" && format != "pem_bundle" && format != "der" {
-		return nil, errors.New(fmt.Sprintf("Invalid format specified: %s", format))
-	}
-
-	return &format, nil
-}
-
-func getTTL(data *framework.FieldData, configProfileEntry *CAGWProfileEntry) time.Duration {
-	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
-	if ttl <= 0 {
-		ttl = configProfileEntry.TTL
-	}
-	if configProfileEntry.MaxTTL > 0 && ttl > configProfileEntry.MaxTTL {
-		ttl = configProfileEntry.MaxTTL
-	}
-	return ttl
 }

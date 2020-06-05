@@ -12,9 +12,10 @@ import (
 
 func pathSign(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "sign/" + framework.GenericNameRegex("profile"),
+		Pattern: "sign/" + framework.GenericNameRegex("caId"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opList},
 			logical.UpdateOperation: &framework.PathOperation{Callback: b.opSign},
 		},
 

@@ -12,7 +12,7 @@ import (
 
 func pathConfig(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "config",
+		Pattern: "config/" + framework.GenericNameRegex("caId"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfig},
@@ -31,7 +31,7 @@ func pathConfig(b *backend) *framework.Path {
 		Required:    true,
 	}
 
-	ret.Fields["caid"] = &framework.FieldSchema{
+	ret.Fields["caId"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
 		Description: `CA identifier`,

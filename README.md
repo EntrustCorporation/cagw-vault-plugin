@@ -43,22 +43,21 @@ More information about Vault plugins can be found here: https://vaultproject.io/
 
 ### Base Configuration
 
-You can configure the CA Gateway plugin by writing to the `/config` endpoint. The configuration accepts four properties:
+You can configure the CA Gateway plugin by writing to the `/config/{caId}` endpoint where {caId} is the CA Gateway identifier of the managed CA. The configuration accepts three properties:
 * **pem_bundle** - The certificate and key to login to the CA Gateway with in PEM format.
-* **caid** - The CA identifier of the CA to user
 * **url** - The URL for the CA Gateway server including the context path.
 * **cacerts** - The complete certificate chain for the CA in PEM format.
 
 #### Example
->`vault write pki/config pem_bundle=@user.pem caid=CA_1001 url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
+>`vault write cagw/config/CA_1001 pem_bundle=@user.pem url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
 
->`vault read pki/config`
+>`vault read cagw/config/CA_1001`
 
->`vault read -field=CACerts pki/config`
+>`vault read -field=CACerts cagw/config/CA_1001`
 
->`vault read -field=URL pki/config`
+>`vault read -field=URL cagw/config/CA_1001`
 
->`vault read -field=CaId pki/config`
+>`vault read -field=CaId cagw/config`
 
 ### Profile Configuration
 
@@ -67,29 +66,42 @@ You can configure the CA Gateway plugin by writing to the `/config` endpoint. Th
 
 #### Example
 
->`vault write pki/config/profiles/PROF-101 ttl=15552000 max_ttl=31104000`
+>`vault write cagw/config/CA_1001/profiles/PROF-101 ttl=15552000 max_ttl=31104000`
 
 The profile write operation will connect to CAGW to get the profile properties. The profile properties include the subject variable requirements and subject alternative name requirements if available. These requirements must be provided for the sign or issue operations. The read operation will display these properties.
 
->`vault read pki/config/profiles/PROF-101`
+>`vault read cagw/config/CA_1001/profiles/PROF-101`
 
 ## Usage
 
 * **subject_variables** - A comma separated list of the subject variable types and values to use. The types should match with the profile configuration.
 
-To issue a new certificate, write a CSR and subject variables to the sign endpoint with the profile identifier at the end of the path.
+* **alt_names** - A comma-separated list of the subject alternative names (SAN). Each SAN must have the type and value separated by the equal sign.
 
->`vault write pki/sign/CA-PROF-1001 csr=@csr.pem subject_variables=cn=example.com,o=Entrust,c=CA`
+To issue a new certificate, write a CSR to the sign endpoint with the managed CA identifier at the end of the path.
 
-To issue a new PKCS12 (generate the private key with the certificate), write subject variables to the issue endpoint with the profile identifier at the end of the path.
+>`vault write cagw/sign/CA_1001 profile=CA-PROF-1001 csr=@csr.pem subject_variables=cn=example.com,o=Entrust,c=CA`
 
->`vault write pki/issue/CA-PROF-1002 subject_variables=cn=example.com,o=Entrust,c=CA`
+To issue a new PKCS12 (generate the private key with the certificate), write to the issue endpoint with the managed CA identifier at the end of the path.
+
+>`vault write cagw/issue/CA_1001 profile=CA-PROF-1002 subject_variables=cn=example.com,o=Entrust,c=CA`
 
 Subject variables can be template variables as defined in the profile.
 
->`vault write pki/issue/CA-PROF-1002 subject_variables="firstname=Atul,lastname=Gawande"`
+>`vault write cagw/issue/CA_1001 profile=CA-PROF-1002 subject_variables="firstname=Atul,lastname=Gawande"`
 
-Subject alternative names can be provided in a comma-separated list. Each SAN must have the type and value separated by the
-equal sign.
+To include SAN in the request, use the alt_names option.
 
->`vault write pki/issue/CA-PROF-1002 subject_variables="firstname=Tim,lastname=Marshal" alt_names="dNSName=www.entrust.com,iPAddress=10.10.10.10,rfc822Name=tim@enttrust.com"`
+>`vault write cagw/issue/CA_1001 profile=CA-PROF-1002 subject_variables="firstname=Tim,lastname=Marshal" alt_names="dNSName=www.entrust.com,iPAddress=10.10.10.10,rfc822Name=tim@enttrust.com"`
+
+All the certificates with any private keys can be fetched from the secrets engine with the read operation. Using the serial option will return the certificate with any private keys. Not using the serial option will list the serial numbers of all the certificates in the secrets engine.
+
+>`vault read cagw/issue/CA_1001`
+
+>`vault read cagw/issue/CA_1001 serial=1488848948`
+
+>`vault read -field=private_key cagw/issue/CA_1001 serial=1488848948`
+
+>`vault read -field=certificate cagw/issue/CA_1001 serial=1488848948` 
+
+>`vault read -field=chain cagw/issue/CA_1001 serial=1488848948`

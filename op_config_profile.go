@@ -14,6 +14,7 @@ import (
 
 func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
+	caId := data.Get("caId").(string)
 	id := data.Get("profile").(string)
 	profileID := CAGWProfileID{id}
 	entry, err := profileID.Entry(ctx, req, data)
@@ -22,7 +23,7 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 		return logical.ErrorResponse("Error retrieving the profile properties from CAGW"), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/profile/"+id, entry)
+	storageEntry, err := logical.StorageEntryJSON("config/"+caId+"/profiles/"+id, entry)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry"), err
@@ -48,13 +49,14 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 
 func (b *backend) opReadConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
+	caId := data.Get("caId").(string)
 	profileID := data.Get("profile").(string)
 
 	if len(profileID) == 0 {
 		return logical.ErrorResponse("missing the profile ID"), nil
 	}
 
-	storageEntry, err := req.Storage.Get(ctx, "config/profile/"+profileID)
+	storageEntry, err := req.Storage.Get(ctx, "config/"+caId+"/profiles/"+profileID)
 	if err != nil {
 		return logical.ErrorResponse("could not read configuration"), err
 	}

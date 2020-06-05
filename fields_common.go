@@ -8,13 +8,6 @@ package main
 import "github.com/hashicorp/vault/logical/framework"
 
 func addIssueAndSignCommonFields(fields map[string]*framework.FieldSchema) map[string]*framework.FieldSchema {
-	fields["exclude_cn_from_sans"] = &framework.FieldSchema{
-		Type:    framework.TypeBool,
-		Default: false,
-		Description: `If true, the Common Name will not be
-included in DNS or Email Subject Alternate Names.
-Defaults to false (CN is included).`,
-	}
 
 	fields["format"] = &framework.FieldSchema{
 		Type:    framework.TypeString,
@@ -51,6 +44,17 @@ be larger than the role max TTL.`,
 	fields["profile"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Description: `The CAGW profile to use for enrollment`,
+	}
+
+	fields["serial"] = &framework.FieldSchema{
+		Type: framework.TypeString,
+		Description: `The certificate serial number to use for fetching
+		the certificate and any private key.`,
+	}
+
+	fields["caId"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Description: `The CA Id as defined in CAGW configuration.`,
 	}
 
 	return fields
