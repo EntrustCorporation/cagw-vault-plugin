@@ -13,8 +13,9 @@ import (
 )
 
 func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	caId := data.Get("caId").(string)
+
 	certPem := data.Get("pem_bundle").(string)
-	caId := data.Get("caid").(string)
 	url := data.Get("url").(string)
 	caCertPem := data.Get("cacerts").(string)
 
@@ -33,12 +34,11 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 
 	entry := &CAGWConfigEntry{
 		certPem,
-		caId,
 		url,
 		caCertPem,
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/cagw", entry)
+	storageEntry, err := logical.StorageEntryJSON("config/"+caId, entry)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry"), err
@@ -62,7 +62,9 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 
 func (b *backend) opReadConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
-	storageEntry, err := req.Storage.Get(ctx, "config/cagw")
+	caId := data.Get("caId").(string)
+
+	storageEntry, err := req.Storage.Get(ctx, "config/"+caId)
 	if err != nil {
 		return logical.ErrorResponse("could not read configuration"), err
 	}

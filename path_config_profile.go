@@ -12,7 +12,7 @@ import (
 
 func pathConfigProfile(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "config/profiles/" + framework.GenericNameRegex("profile"),
+		Pattern: "config/" + framework.GenericNameRegex("caId") + "/profiles/" + framework.GenericNameRegex("profile"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfigProfile},
@@ -39,6 +39,11 @@ func pathConfigProfile(b *backend) *framework.Path {
 	ret.Fields["max_ttl"] = &framework.FieldSchema{
 		Type:        framework.TypeDurationSecond,
 		Description: "The maximum allowed lease duration",
+	}
+
+	ret.Fields["caId"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Description: `The CA Id as defined in CAGW configuration.`,
 	}
 
 	return ret

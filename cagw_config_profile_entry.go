@@ -34,11 +34,13 @@ type CAGWProfileID struct {
 
 func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *framework.FieldData) (*CAGWProfileEntry, error) {
 
+	caId := data.Get("caId").(string)
+
 	if len(p.Id) == 0 {
 		return nil, errors.New("Missing the profile ID")
 	}
 
-	configEntry, err := getConfigEntry(ctx, req)
+	configEntry, err := getConfigEntry(ctx, req, caId)
 	if err != nil {
 		return nil, errors.New("Error fetching config")
 	}
@@ -48,7 +50,7 @@ func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("Error retrieving TLS configuration: %g", err)
 	}
 
-	profileResp, err := getResponse(tlsClientConfig, configEntry, p.Id)
+	profileResp, err := getResponse(tlsClientConfig, configEntry, caId, p.Id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error response received from gateway: %g", err)
@@ -70,7 +72,7 @@ func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *fr
 
 }
 
-func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWConfigEntry, profileID string) (*ProfileResponse, error) {
+func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWConfigEntry, caId string, profileID string) (*ProfileResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
@@ -78,7 +80,7 @@ func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWConfigEntry, prof
 
 	client := &http.Client{Transport: tr}
 
-	resp, err := client.Get(configEntry.URL + "/v1/certificate-authorities/" + configEntry.CaId + "/profiles/" + profileID)
+	resp, err := client.Get(configEntry.URL + "/v1/certificate-authorities/" + caId + "/profiles/" + profileID)
 	if err != nil {
 		return nil, fmt.Errorf("Error response: %g", err)
 	}

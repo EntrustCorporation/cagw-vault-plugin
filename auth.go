@@ -9,12 +9,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+
 	"github.com/hashicorp/vault/logical"
 	"github.com/pkg/errors"
 )
 
 func getTLSConfig(ctx context.Context, req *logical.Request, configEntry *CAGWConfigEntry) (*tls.Config, error) {
-	certificate, err := tls.X509KeyPair([]byte(configEntry.Cert), []byte(configEntry.Cert))
+	certificate, err := tls.X509KeyPair([]byte(configEntry.PEMBundle), []byte(configEntry.PEMBundle))
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing client certificate and key")
 	}
