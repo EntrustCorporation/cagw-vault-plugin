@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getTLSConfig(ctx context.Context, req *logical.Request, configEntry *CAGWConfigEntry) (*tls.Config, error) {
+func getTLSConfig(ctx context.Context, req *logical.Request, configEntry *CAGWEntry) (*tls.Config, error) {
 	certificate, err := tls.X509KeyPair([]byte(configEntry.PEMBundle), []byte(configEntry.PEMBundle))
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing client certificate and key")

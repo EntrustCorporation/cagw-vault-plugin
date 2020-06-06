@@ -51,6 +51,8 @@ You can configure the CA Gateway plugin by writing to the `/config/{caId}` endpo
 #### Example
 >`vault write cagw/config/CA_1001 pem_bundle=@user.pem url=https://cagateway:8080/cagw cacerts=@cagw.root.pem`
 
+The above write operation will connect to CAGW to get the profile IDs for the managed CA. The read operation will display these profile IDs which are required for the profile configuration.
+
 >`vault read cagw/config/CA_1001`
 
 >`vault read -field=CACerts cagw/config/CA_1001`
