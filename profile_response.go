@@ -10,6 +10,11 @@ type ProfileResponse struct {
 	Message Message `json:"message"`
 }
 
+type ProfilesResponse struct {
+	Profiles []Profile `json:"profiles"`
+	Message  Message   `json:"message"`
+}
+
 type Profile struct {
 	Id                          string                       `json:"id"`
 	Name                        string                       `json:"name"`

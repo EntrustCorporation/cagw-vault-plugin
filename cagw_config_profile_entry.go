@@ -29,7 +29,8 @@ type CAGWProfileEntry struct {
 }
 
 type CAGWProfileID struct {
-	Id string
+	Id   string
+	Name string
 }
 
 func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *framework.FieldData) (*CAGWProfileEntry, error) {
@@ -72,7 +73,7 @@ func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *fr
 
 }
 
-func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWConfigEntry, caId string, profileID string) (*ProfileResponse, error) {
+func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWEntry, caId string, profileID string) (*ProfileResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,

@@ -15,14 +15,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getConfigEntry(ctx context.Context, req *logical.Request, caId string) (*CAGWConfigEntry, error) {
+func getConfigEntry(ctx context.Context, req *logical.Request, caId string) (*CAGWEntry, error) {
 	storageEntry, err := req.Storage.Get(ctx, "config/"+caId)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "CAGW configuration could not be loaded")
 	}
 
-	configEntry := CAGWConfigEntry{}
+	configEntry := CAGWEntry{}
 	err = storageEntry.DecodeJSON(&configEntry)
 
 	if err != nil {

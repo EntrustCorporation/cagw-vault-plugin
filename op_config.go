@@ -32,13 +32,23 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 		return logical.ErrorResponse("must provide gateway CA certificate"), nil
 	}
 
-	entry := &CAGWConfigEntry{
+	entry := &CAGWEntry{
 		certPem,
 		url,
 		caCertPem,
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/"+caId, entry)
+	profiles, err := entry.Profiles(ctx, req, data)
+	if err != nil {
+		return logical.ErrorResponse("error fetching profile configurations from CAGW"), err
+	}
+
+	caAndProfiles := CAGWEntryCAGWProfileIDs{
+		*entry,
+		profiles,
+	}
+
+	storageEntry, err := logical.StorageEntryJSON("config/"+caId, caAndProfiles)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry"), err

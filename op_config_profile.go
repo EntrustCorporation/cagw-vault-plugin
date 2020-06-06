@@ -16,7 +16,8 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 
 	caId := data.Get("caId").(string)
 	id := data.Get("profile").(string)
-	profileID := CAGWProfileID{id}
+
+	profileID := CAGWProfileID{id, ""}
 	entry, err := profileID.Entry(ctx, req, data)
 
 	if err != nil {
