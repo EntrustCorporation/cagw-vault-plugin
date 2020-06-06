@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opWriteConfigCA(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	caId := data.Get("caId").(string)
 
 	certPem := data.Get("pem_bundle").(string)
@@ -32,19 +32,19 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 		return logical.ErrorResponse("must provide gateway CA certificate"), nil
 	}
 
-	entry := &CAGWEntry{
+	configCa := &CAGWConfigCA{
 		certPem,
 		url,
 		caCertPem,
 	}
 
-	profiles, err := entry.Profiles(ctx, req, data)
+	profiles, err := configCa.ProfileIDs(ctx, req, data)
 	if err != nil {
 		return logical.ErrorResponse("error fetching profile configurations from CAGW"), err
 	}
 
-	caAndProfiles := CAGWEntryCAGWProfileIDs{
-		*entry,
+	caAndProfiles := CAGWConfigCAConfigProfileIDs{
+		*configCa,
 		profiles,
 	}
 
@@ -70,7 +70,7 @@ func (b *backend) opConfig(ctx context.Context, req *logical.Request, data *fram
 	}, nil
 }
 
-func (b *backend) opReadConfig(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opReadConfigCA(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
 	caId := data.Get("caId").(string)
 

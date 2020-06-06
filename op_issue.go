@@ -55,14 +55,14 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		}
 	}
 
-	configEntry, err := getConfigEntry(ctx, req, caId)
+	configCa, err := getConfigCA(ctx, req, caId)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
-	configProfileEntry, err := getProfileConfig(ctx, req, caId, profileId)
+	configProfile, err := getConfigProfile(ctx, req, caId, profileId)
 
-	ttl := getTTL(data, configProfileEntry)
+	ttl := getTTL(data, configProfile)
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
@@ -90,7 +90,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		b.Logger().Debug(fmt.Sprintf("Enrollment request body: %v", string(body)))
 	}
 
-	tlsClientConfig, err := getTLSConfig(ctx, req, configEntry)
+	tlsClientConfig, err := getTLSConfig(ctx, req, configCa)
 	if err != nil {
 		return logical.ErrorResponse("Error retrieving TLS configuration: %v", err), err
 	}
@@ -101,7 +101,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Post(configEntry.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
+	resp, err := client.Post(configCa.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return logical.ErrorResponse("Error response: %v", err), err
 	}

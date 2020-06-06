@@ -7,27 +7,28 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opWriteConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
 	caId := data.Get("caId").(string)
 	id := data.Get("profile").(string)
 
-	profileID := CAGWProfileID{id, ""}
-	entry, err := profileID.Entry(ctx, req, data)
+	profileID := CAGWConfigProfileID{id, ""}
+	profile, err := profileID.Profile(ctx, req, data)
 
 	if err != nil {
-		return logical.ErrorResponse("Error retrieving the profile properties from CAGW"), err
+		return logical.ErrorResponse(fmt.Sprint("Error retrieving the profile properties from CAGW: %s", err)), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/"+caId+"/profiles/"+id, entry)
+	storageEntry, err := logical.StorageEntryJSON("config/"+caId+"/profiles/"+id, profile)
 
 	if err != nil {
-		return logical.ErrorResponse("error creating config storage entry"), err
+		return logical.ErrorResponse("error creating config storage entry for profile"), err
 	}
 
 	err = req.Storage.Put(ctx, storageEntry)
@@ -37,10 +38,10 @@ func (b *backend) opConfigProfile(ctx context.Context, req *logical.Request, dat
 
 	respData := map[string]interface{}{
 		"Message":                       "Configuration successful",
-		"Profile ID":                    entry.Id,
-		"Profile Name":                  entry.Name,
-		"Subject Variable Requirements": entry.SubjectVariableRequirements,
-		"Subject Alt Name Requirements": entry.SubjectAltNameRequirements,
+		"Profile ID":                    profile.Id,
+		"Profile Name":                  profile.Name,
+		"Subject Variable Requirements": profile.SubjectVariableRequirements,
+		"Subject Alt Name Requirements": profile.SubjectAltNameRequirements,
 	}
 
 	return &logical.Response{

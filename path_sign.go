@@ -15,7 +15,7 @@ func pathSign(b *backend) *framework.Path {
 		Pattern: "sign/" + framework.GenericNameRegex("caId"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
-			logical.ReadOperation:   &framework.PathOperation{Callback: b.opList},
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadCerts},
 			logical.UpdateOperation: &framework.PathOperation{Callback: b.opSign},
 		},
 

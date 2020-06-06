@@ -15,7 +15,7 @@ func pathIssue(b *backend) *framework.Path {
 		Pattern: "issue/" + framework.GenericNameRegex("caId"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
-			logical.ReadOperation:   &framework.PathOperation{Callback: b.opList},
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadCerts},
 			logical.UpdateOperation: &framework.PathOperation{Callback: b.opIssue},
 		},
 
