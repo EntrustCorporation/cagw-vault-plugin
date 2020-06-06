@@ -15,35 +15,35 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getConfigEntry(ctx context.Context, req *logical.Request, caId string) (*CAGWEntry, error) {
+func getConfigCA(ctx context.Context, req *logical.Request, caId string) (*CAGWConfigCA, error) {
 	storageEntry, err := req.Storage.Get(ctx, "config/"+caId)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "CAGW configuration could not be loaded")
 	}
 
-	configEntry := CAGWEntry{}
-	err = storageEntry.DecodeJSON(&configEntry)
+	configCa := CAGWConfigCA{}
+	err = storageEntry.DecodeJSON(&configCa)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "CAGW configuration could not be parsed")
 	}
 
-	return &configEntry, nil
+	return &configCa, nil
 }
 
-func getProfileConfig(ctx context.Context, req *logical.Request, caId string, profileName string) (*CAGWProfileEntry, error) {
-	profileStorageEntry, err := req.Storage.Get(ctx, "config/"+caId+"/profiles/"+profileName)
+func getConfigProfile(ctx context.Context, req *logical.Request, caId string, profileId string) (*CAGWConfigProfile, error) {
+	profileStorageEntry, err := req.Storage.Get(ctx, "config/"+caId+"/profiles/"+profileId)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "CAGW profile configuration could not be loaded")
 	}
 
-	configProfileEntry := CAGWProfileEntry{}
+	configProfile := CAGWConfigProfile{}
 
 	// If there is a storage entry, decode it, else use defaults
 	if profileStorageEntry != nil {
-		err = profileStorageEntry.DecodeJSON(&configProfileEntry)
+		err = profileStorageEntry.DecodeJSON(&configProfile)
 		if err != nil {
 			return nil, errors.Wrap(err, "CAGW profile configuration could not be parsed")
 		}
@@ -51,7 +51,7 @@ func getProfileConfig(ctx context.Context, req *logical.Request, caId string, pr
 		return nil, errors.Wrap(err, "CAGW profile configuration could not be found")
 	}
 
-	return &configProfileEntry, nil
+	return &configProfile, nil
 }
 
 func getFormat(data *framework.FieldData) (*string, error) {
@@ -66,13 +66,13 @@ func getFormat(data *framework.FieldData) (*string, error) {
 	return &format, nil
 }
 
-func getTTL(data *framework.FieldData, configProfileEntry *CAGWProfileEntry) time.Duration {
+func getTTL(data *framework.FieldData, configProfile *CAGWConfigProfile) time.Duration {
 	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
 	if ttl <= 0 {
-		ttl = configProfileEntry.TTL
+		ttl = configProfile.TTL
 	}
-	if configProfileEntry.MaxTTL > 0 && ttl > configProfileEntry.MaxTTL {
-		ttl = configProfileEntry.MaxTTL
+	if configProfile.MaxTTL > 0 && ttl > configProfile.MaxTTL {
+		ttl = configProfile.MaxTTL
 	}
 	return ttl
 }

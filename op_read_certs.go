@@ -12,12 +12,12 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-func (b *backend) opList(ctx context.Context, req *logical.Request, data *framework.FieldData) (response *logical.Response, retErr error) {
+func (b *backend) opReadCerts(ctx context.Context, req *logical.Request, data *framework.FieldData) (response *logical.Response, retErr error) {
 
 	serial := data.Get("serial").(string)
 
 	if len(serial) > 0 {
-		return b.opGet(ctx, req, data)
+		return b.opReadCert(ctx, req, data)
 	}
 
 	caId := data.Get("caId").(string)
@@ -29,7 +29,7 @@ func (b *backend) opList(ctx context.Context, req *logical.Request, data *framew
 	return logical.ListResponse(entries), nil
 }
 
-func (b *backend) opGet(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opReadCert(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
 	caId := data.Get("caId").(string)
 	serial := data.Get("serial").(string)

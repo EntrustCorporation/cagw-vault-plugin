@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CAGWProfileEntry struct {
+type CAGWConfigProfile struct {
 	Id                          string                       `json:"id"`
 	Name                        string                       `json:"name"`
 	SubjectVariableRequirements []SubjectVariableRequirement `json:"subjectVariableRequirements"`
@@ -28,12 +28,12 @@ type CAGWProfileEntry struct {
 	MaxTTL                      time.Duration                `json:"max_ttl_duration" mapstructure:"max_ttl_duration"`
 }
 
-type CAGWProfileID struct {
+type CAGWConfigProfileID struct {
 	Id   string
 	Name string
 }
 
-func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *framework.FieldData) (*CAGWProfileEntry, error) {
+func (p CAGWConfigProfileID) Profile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*CAGWConfigProfile, error) {
 
 	caId := data.Get("caId").(string)
 
@@ -41,26 +41,26 @@ func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *fr
 		return nil, errors.New("Missing the profile ID")
 	}
 
-	configEntry, err := getConfigEntry(ctx, req, caId)
+	configCa, err := getConfigCA(ctx, req, caId)
 	if err != nil {
 		return nil, errors.New("Error fetching config")
 	}
 
-	tlsClientConfig, err := getTLSConfig(ctx, req, configEntry)
+	tlsClientConfig, err := getTLSConfig(ctx, req, configCa)
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving TLS configuration: %g", err)
+		return nil, fmt.Errorf("Error retrieving TLS configuration: %w", err)
 	}
 
-	profileResp, err := getResponse(tlsClientConfig, configEntry, caId, p.Id)
+	profileResp, err := p.getProfile(tlsClientConfig, configCa, caId)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error response received from gateway: %g", err)
+		return nil, fmt.Errorf("Error response received from gateway: %w", err)
 	}
 
 	ttl := time.Duration(data.Get("ttl").(int)) * time.Second
 	maxTtl := time.Duration(data.Get("max_ttl").(int)) * time.Second
 
-	entry := &CAGWProfileEntry{
+	profile := &CAGWConfigProfile{
 		profileResp.Profile.Id,
 		profileResp.Profile.Name,
 		profileResp.Profile.SubjectVariableRequirements,
@@ -69,11 +69,11 @@ func (p CAGWProfileID) Entry(ctx context.Context, req *logical.Request, data *fr
 		maxTtl,
 	}
 
-	return entry, nil
+	return profile, nil
 
 }
 
-func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWEntry, caId string, profileID string) (*ProfileResponse, error) {
+func (p CAGWConfigProfileID) getProfile(tlsClientConfig *tls.Config, configCa *CAGWConfigCA, caId string) (*ProfileResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
@@ -81,14 +81,14 @@ func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWEntry, caId strin
 
 	client := &http.Client{Transport: tr}
 
-	resp, err := client.Get(configEntry.URL + "/v1/certificate-authorities/" + caId + "/profiles/" + profileID)
+	resp, err := client.Get(configCa.URL + "/v1/certificate-authorities/" + caId + "/profiles/" + p.Id)
 	if err != nil {
-		return nil, fmt.Errorf("Error response: %g", err)
+		return nil, fmt.Errorf("Error response: %w", err)
 	}
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("CAGW response could not be read: %g", err)
+		return nil, fmt.Errorf("CAGW response could not be read: %w", err)
 	}
 
 	if resp.StatusCode != 200 {
@@ -103,7 +103,7 @@ func getResponse(tlsClientConfig *tls.Config, configEntry *CAGWEntry, caId strin
 	var profileResp *ProfileResponse
 	err = json.Unmarshal(responseBody, &profileResp)
 	if err != nil {
-		return nil, fmt.Errorf("CAGW enrollment response could not be parsed: %g", err)
+		return nil, fmt.Errorf("CAGW enrollment response could not be parsed: %w", err)
 	}
 
 	return profileResp, nil

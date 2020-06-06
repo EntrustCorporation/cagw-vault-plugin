@@ -16,7 +16,7 @@ func pathConfigProfile(b *backend) *framework.Path {
 
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfigProfile},
-			logical.UpdateOperation: &framework.PathOperation{Callback: b.opConfigProfile},
+			logical.UpdateOperation: &framework.PathOperation{Callback: b.opWriteConfigProfile},
 		},
 
 		HelpSynopsis:    "CAGW Profile Configuration",

@@ -18,18 +18,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CAGWEntry struct {
+type CAGWConfigCA struct {
 	PEMBundle string
 	URL       string
 	CACerts   string
 }
 
-type CAGWEntryCAGWProfileIDs struct {
-	Ca       CAGWEntry
-	Profiles []CAGWProfileID
+type CAGWConfigCAConfigProfileIDs struct {
+	CAGWConfigCA
+	Profiles []CAGWConfigProfileID
 }
 
-func (c CAGWEntry) Profiles(ctx context.Context, req *logical.Request, data *framework.FieldData) ([]CAGWProfileID, error) {
+func (c CAGWConfigCA) ProfileIDs(ctx context.Context, req *logical.Request, data *framework.FieldData) ([]CAGWConfigProfileID, error) {
 
 	caId := data.Get("caId").(string)
 
@@ -39,19 +39,19 @@ func (c CAGWEntry) Profiles(ctx context.Context, req *logical.Request, data *fra
 
 	tlsClientConfig, err := getTLSConfig(ctx, req, &c)
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving TLS configuration: %g", err)
+		return nil, fmt.Errorf("Error retrieving TLS configuration: %w", err)
 	}
 
 	profilesResp, err := c.getProfiles(tlsClientConfig, caId)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error response received from gateway: %g", err)
+		return nil, fmt.Errorf("Error response received from gateway: %w", err)
 	}
 
 	profiles := profilesResp.Profiles
-	var entries []CAGWProfileID
+	var entries []CAGWConfigProfileID
 	for _, p := range profiles {
-		entries = append(entries, CAGWProfileID{
+		entries = append(entries, CAGWConfigProfileID{
 			p.Id,
 			p.Name,
 		})
@@ -61,7 +61,7 @@ func (c CAGWEntry) Profiles(ctx context.Context, req *logical.Request, data *fra
 
 }
 
-func (c CAGWEntry) getProfiles(tlsClientConfig *tls.Config, caId string) (*ProfilesResponse, error) {
+func (c CAGWConfigCA) getProfiles(tlsClientConfig *tls.Config, caId string) (*ProfilesResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
@@ -71,12 +71,12 @@ func (c CAGWEntry) getProfiles(tlsClientConfig *tls.Config, caId string) (*Profi
 
 	resp, err := client.Get(c.URL + "/v1/certificate-authorities/" + caId + "/profiles")
 	if err != nil {
-		return nil, fmt.Errorf("Error response: %g", err)
+		return nil, fmt.Errorf("Error response: %w", err)
 	}
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("CAGW response could not be read: %g", err)
+		return nil, fmt.Errorf("CAGW response could not be read: %w", err)
 	}
 
 	if resp.StatusCode != 200 {
@@ -91,7 +91,7 @@ func (c CAGWEntry) getProfiles(tlsClientConfig *tls.Config, caId string) (*Profi
 	var profilesResp *ProfilesResponse
 	err = json.Unmarshal(responseBody, &profilesResp)
 	if err != nil {
-		return nil, fmt.Errorf("CAGW enrollment response could not be parsed: %g", err)
+		return nil, fmt.Errorf("CAGW enrollment response could not be parsed: %w", err)
 	}
 
 	return profilesResp, nil
