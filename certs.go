@@ -12,16 +12,11 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-func (b *backend) opReadCerts(ctx context.Context, req *logical.Request, data *framework.FieldData) (response *logical.Response, retErr error) {
-
-	serial := data.Get("serial").(string)
-
-	if len(serial) > 0 {
-		return b.opReadCert(ctx, req, data)
-	}
+func opListCerts(ctx context.Context, req *logical.Request, data *framework.FieldData, path string) (response *logical.Response, retErr error) {
 
 	caId := data.Get("caId").(string)
-	entries, err := req.Storage.List(ctx, "certs/"+caId+"/")
+
+	entries, err := req.Storage.List(ctx, path+"/"+caId+"/")
 	if err != nil {
 		return nil, err
 	}
@@ -29,12 +24,12 @@ func (b *backend) opReadCerts(ctx context.Context, req *logical.Request, data *f
 	return logical.ListResponse(entries), nil
 }
 
-func (b *backend) opReadCert(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func opReadCert(ctx context.Context, req *logical.Request, data *framework.FieldData, path string) (*logical.Response, error) {
 
 	caId := data.Get("caId").(string)
 	serial := data.Get("serial").(string)
 
-	storageEntry, err := req.Storage.Get(ctx, "certs/"+caId+"/"+serial)
+	storageEntry, err := req.Storage.Get(ctx, path+"/"+caId+"/"+serial)
 	if err != nil {
 		return logical.ErrorResponse("could not read certificate with the serial number: " + serial), err
 	}

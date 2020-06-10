@@ -96,9 +96,9 @@ To include SAN in the request, use the alt_names option.
 
 >`vault write cagw/issue/CA_1001 profile=CA-PROF-1002 subject_variables="firstname=Tim,lastname=Marshal" alt_names="dNSName=www.entrust.com,iPAddress=10.10.10.10,rfc822Name=tim@enttrust.com"`
 
-All the certificates with any private keys can be fetched from the secrets engine with the read operation. Using the serial option will return the certificate with any private keys. Not using the serial option will list the serial numbers of all the certificates in the secrets engine.
+The list opereation will return the serial numbers of all the certificates in the secrets engine for the specific CA. The read operation with the required serial value will return the certificate and its private key if available.
 
->`vault read cagw/issue/CA_1001`
+>`vault list cagw/issue/CA_1001`
 
 >`vault read cagw/issue/CA_1001 serial=1488848948`
 
