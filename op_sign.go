@@ -21,7 +21,7 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
 	caId := data.Get("caId").(string)
 	profileId := data.Get("profile").(string)
@@ -155,7 +155,7 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		}
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("certs/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+	storageEntry, err := logical.StorageEntryJSON("sign/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating certificate storage entry"), err
@@ -170,4 +170,12 @@ func (b *backend) opSign(ctx context.Context, req *logical.Request, data *framew
 		Data: respData,
 	}, nil
 
+}
+
+func (b *backend) opReadSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	return opReadCert(ctx, req, data, "sign")
+}
+
+func (b *backend) opListSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	return opListCerts(ctx, req, data, "sign")
 }

@@ -12,11 +12,12 @@ import (
 
 func pathSign(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "sign/" + framework.GenericNameRegex("caId"),
+		Pattern: "sign/" + framework.GenericNameRegex("caId") + "/?$",
 
 		Operations: map[logical.Operation]framework.OperationHandler{
-			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadCerts},
-			logical.UpdateOperation: &framework.PathOperation{Callback: b.opSign},
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadSign},
+			logical.ListOperation:   &framework.PathOperation{Callback: b.opListSign},
+			logical.UpdateOperation: &framework.PathOperation{Callback: b.opWriteSign},
 		},
 
 		HelpSynopsis:    "CSR Enrollment",

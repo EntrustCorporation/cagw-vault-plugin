@@ -26,7 +26,7 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	profileId := data.Get("profile").(string)
 	caId := data.Get("caId").(string)
 
@@ -139,7 +139,7 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		return logical.ErrorResponse("error parsing the PKCS12: %v", err), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("certs/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+	storageEntry, err := logical.StorageEntryJSON("issue/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating certificate storage entry"), err
@@ -154,6 +154,14 @@ func (b *backend) opIssue(ctx context.Context, req *logical.Request, data *frame
 		Data: respData,
 	}, nil
 
+}
+
+func (b *backend) opReadIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	return opReadCert(ctx, req, data, "issue")
+}
+
+func (b *backend) opListIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	return opListCerts(ctx, req, data, "issue")
 }
 
 func Pkcs12ToPem(p12 []byte, password string) (map[string]interface{}, error) {
