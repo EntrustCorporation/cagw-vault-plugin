@@ -37,6 +37,9 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 		return logical.ErrorResponse("Unsupported format: %s", format), nil
 	}
 
+	if len(profileId) <= 0 {
+		return logical.ErrorResponse("profile is empty"), nil
+	}
 	if len(subjectVariables) <= 0 {
 		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
