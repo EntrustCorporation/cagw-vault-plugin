@@ -26,6 +26,10 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 	caId := data.Get("caId").(string)
 	profileId := data.Get("profile").(string)
 
+	if len(profileId) <= 0 {
+		return logical.ErrorResponse("profile is empty"), nil
+	}
+
 	var err error
 
 	format, err := getFormat(data)
