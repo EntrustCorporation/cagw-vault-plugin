@@ -1,13 +1,19 @@
-# Entrust Datacard CA Gateway Vault plugin
+# Entrust CA Gateway Vault plugin
 
-The Entrust Datacard CA Gateway Vault plugin allows Vault to issue certificates that come through the CA Gateway from the underlying exernal Certificate Authority.
-Vault comes with a built-in CA as part of its Secrets Engine, but using that internal CA will often not meet regulatory or company security requirements.  If this is the case, then you have two options:
+## Summary
+
+Entrust CA Gateway Vault plugin allows you to issue certificates from an external Certificate Authority. Certificates created in Vault are visible in Entrust management console & subject to your organization’s policies and controls, whether the CA is self-managed, hosted in your own cloud or managed & hosted by Entrust’s Managed PKI Service.
+
+## Details
+
+The Entrust CA Gateway Vault plugin allows Vault to issue certificates that come through the CA Gateway from the underlying external Certificate Authority. Vault comes with a built-in CA as part of its Secrets Engine, but using that internal CA will often not meet regulatory or company security requirements. If this is the case, then you have two options:
 * Use the Vault provisions to root to an external CA rather than self-sign its own CA certificate,
 * Or, plug into your own issuing CA.
 
-Doing the latter has the advantage that the certificates you create will be visible in the Entrust Datacard management console and subject to the policies and controls set up by your organization.  This CA may be either one that you self-manage and host in your own private/public cloud or one that is managed and hosted by Entrust Datacard.
+Doing the latter has the advantage that the certificates you create will be visible in the Entrust management console and subject to the policies and controls set up by your organization. This CA may be either one that you self-manage and host in your own private/public cloud or one that is managed and hosted by Entrust.
 
-The plugin is designed to be a drop in replacement for Vault's built in PKI plugin, implementing the capability necessary to support the certificate issuance.
+This plugin is designed to be a drop in replacement for Vault's built in PKI plugin, implementing the capability necessary to support the certificate issuance.
+
 
 ## Build
 
