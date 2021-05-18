@@ -71,7 +71,6 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 	if err != nil {
 		return logical.ErrorResponse("Could not get profile configuration for profile " + profileId + ": " + err.Error()), err
 	}
-	b.Logger().Info(fmt.Sprintf("configProfile: %v", configProfile))
 
 	ttl := getTTL(data, configProfile)
 
