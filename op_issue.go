@@ -8,6 +8,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"math/big"
 
 	"crypto/ecdsa"
@@ -27,9 +28,7 @@ import (
 )
 
 func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	profileId := data.Get("profile").(string)
-	caId := data.Get("caId").(string)
-
+	roleName := data.Get("roleName").(string)
 	subjectVariables := data.Get("subject_variables").(string)
 	format := data.Get("format").(string)
 
@@ -37,9 +36,6 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 		return logical.ErrorResponse("Unsupported format: %s", format), nil
 	}
 
-	if len(profileId) <= 0 {
-		return logical.ErrorResponse("profile is empty"), nil
-	}
 	if len(subjectVariables) <= 0 {
 		return logical.ErrorResponse("subject_variables is empty"), nil
 	}
@@ -58,14 +54,31 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 		}
 	}
 
-	configCa, err := getConfigCA(ctx, req, caId)
+	configRole, err := getConfigRole(ctx, req, roleName)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
-	configProfile, err := getConfigProfile(ctx, req, caId, profileId)
+	profileId := configRole.ProfileId
+	if len(profileId) <= 0 {
+		profileId = data.Get("profile").(string)
+		if len(profileId) <= 0 {
+			return logical.ErrorResponse("a profile must be specified for this CA role configuration"), nil
+		}
+	}
+
+	configProfile, err := getConfigProfile(ctx, req, roleName, profileId)
+	if err != nil {
+		return logical.ErrorResponse("Could not get profile configuration for profile " + profileId + ": " + err.Error()), err
+	}
+	b.Logger().Info(fmt.Sprintf("configProfile: %v", configProfile))
 
 	ttl := getTTL(data, configProfile)
+
+	password, err := GenerateRandomString(32)
+	if err != nil {
+		return logical.ErrorResponse("Error generating random password: " + err.Error()), err
+	}
 
 	// Construct enrollment request
 	enrollmentRequest := EnrollmentRequest{
@@ -74,7 +87,7 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 			Format: "PKCS12",
 			Protection: &Protection{
 				Type:     "PasswordProtection",
-				Password: "ChangeMe2",
+				Password: password,
 			},
 		},
 		SubjectVariables: subjectVars,
@@ -93,7 +106,7 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 		b.Logger().Debug(fmt.Sprintf("Enrollment request body: %v", string(body)))
 	}
 
-	tlsClientConfig, err := getTLSConfig(ctx, req, configCa)
+	tlsClientConfig, err := getTLSConfig(ctx, req, configRole)
 	if err != nil {
 		return logical.ErrorResponse("Error retrieving TLS configuration: %v", err), err
 	}
@@ -104,7 +117,13 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Post(configCa.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
+
+	caId := configRole.CAId
+	if len(caId) == 0 {
+		caId = roleName
+	}
+
+	resp, err := client.Post(configRole.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return logical.ErrorResponse("Error response: %v", err), err
 	}
@@ -136,13 +155,13 @@ func (b *backend) opWriteIssue(ctx context.Context, req *logical.Request, data *
 		return logical.ErrorResponse("base64 could not be decoded: %v", err), err
 	}
 
-	respData, err := Pkcs12ToPem(p12, "ChangeMe2")
+	respData, err := Pkcs12ToPem(p12, password)
 
 	if err != nil {
 		return logical.ErrorResponse("error parsing the PKCS12: %v", err), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("issue/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+	storageEntry, err := logical.StorageEntryJSON("issue/"+roleName+"/"+respData["serial_number"].(*big.Int).String(), respData)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating certificate storage entry"), err
@@ -216,4 +235,18 @@ func Pkcs12ToPem(p12 []byte, password string) (map[string]interface{}, error) {
 	respData["chain"] = caCertsBlocks
 
 	return respData, nil
+}
+
+func GenerateRandomString(n int) (string, error) {
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", err
+		}
+		ret[i] = letters[num.Int64()]
+	}
+
+	return string(ret), nil
 }

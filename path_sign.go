@@ -12,7 +12,7 @@ import (
 
 func pathSign(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "sign/" + framework.GenericNameRegex("caId") + "/?$",
+		Pattern: "sign/" + framework.GenericNameRegex("roleName") + "/?$",
 
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadSign},

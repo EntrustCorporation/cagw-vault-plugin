@@ -30,6 +30,7 @@ func Backend(conf *logical.BackendConfig) *backend {
 			pathConfig(&b),
 			pathSign(&b),
 			pathIssue(&b),
+			pathConfigProfiles(&b),
 			pathConfigProfile(&b),
 		},
 		PathsSpecial: &logical.Paths{
