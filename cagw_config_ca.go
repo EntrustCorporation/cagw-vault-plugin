@@ -18,20 +18,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CAGWConfigCA struct {
+type CAGWConfigRole struct {
 	PEMBundle string
 	URL       string
 	CACerts   string
+	CAId      string
+	ProfileId string
 }
 
 type CAGWConfigCAConfigProfileIDs struct {
-	CAGWConfigCA
+	CAGWConfigRole
 	Profiles []CAGWConfigProfileID
 }
 
-func (c CAGWConfigCA) ProfileIDs(ctx context.Context, req *logical.Request, data *framework.FieldData) ([]CAGWConfigProfileID, error) {
-
-	caId := data.Get("caId").(string)
+func (c CAGWConfigRole) ProfileIDs(ctx context.Context, req *logical.Request, data *framework.FieldData, caId string) ([]CAGWConfigProfileID, error) {
 
 	if len(caId) == 0 {
 		return nil, errors.New("Missing the caId")
@@ -43,7 +43,6 @@ func (c CAGWConfigCA) ProfileIDs(ctx context.Context, req *logical.Request, data
 	}
 
 	profilesResp, err := c.getProfiles(tlsClientConfig, caId)
-
 	if err != nil {
 		return nil, fmt.Errorf("Error response received from gateway: %w", err)
 	}
@@ -61,7 +60,7 @@ func (c CAGWConfigCA) ProfileIDs(ctx context.Context, req *logical.Request, data
 
 }
 
-func (c CAGWConfigCA) getProfiles(tlsClientConfig *tls.Config, caId string) (*ProfilesResponse, error) {
+func (c CAGWConfigRole) getProfiles(tlsClientConfig *tls.Config, caId string) (*ProfilesResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,

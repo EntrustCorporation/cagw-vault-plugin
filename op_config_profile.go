@@ -15,17 +15,18 @@ import (
 
 func (b *backend) opWriteConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
-	caId := data.Get("caId").(string)
-	id := data.Get("profile").(string)
+	roleName := data.Get("roleName").(string)
 
-	profileID := CAGWConfigProfileID{id, ""}
-	profile, err := profileID.Profile(ctx, req, data)
+	id := getProfileId(data)
+
+	profileId := CAGWConfigProfileID{id, ""}
+	profile, err := profileId.Profile(ctx, req, data)
 
 	if err != nil {
-		return logical.ErrorResponse(fmt.Sprint("Error retrieving the profile properties from CAGW: %s", err)), err
+		return logical.ErrorResponse(fmt.Sprintf("Error retrieving the profile properties from CAGW: %s", err)), err
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("config/"+caId+"/profiles/"+id, profile)
+	storageEntry, err := logical.StorageEntryJSON("config/"+roleName+"/profiles/"+profile.Id, profile)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating config storage entry for profile"), err
@@ -51,14 +52,22 @@ func (b *backend) opWriteConfigProfile(ctx context.Context, req *logical.Request
 
 func (b *backend) opReadConfigProfile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
-	caId := data.Get("caId").(string)
-	profileID := data.Get("profile").(string)
+	roleName := data.Get("roleName").(string)
+	profileId := getProfileId(data)
 
-	if len(profileID) == 0 {
-		return logical.ErrorResponse("missing the profile ID"), nil
+	configCa, err := getConfigRole(ctx, req, roleName)
+	if err != nil {
+		return logical.ErrorResponse("invalid CAGW role configuration"), err
 	}
 
-	storageEntry, err := req.Storage.Get(ctx, "config/"+caId+"/profiles/"+profileID)
+	if len(profileId) <= 0 {
+		profileId = configCa.ProfileId
+		if len(profileId) <= 0 {
+			return logical.ErrorResponse("missing the profile ID"), nil
+		}
+	}
+
+	storageEntry, err := req.Storage.Get(ctx, "config/"+roleName+"/profiles/"+profileId)
 	if err != nil {
 		return logical.ErrorResponse("could not read configuration"), err
 	}
@@ -78,4 +87,15 @@ func (b *backend) opReadConfigProfile(ctx context.Context, req *logical.Request,
 	}
 
 	return resp, nil
+}
+
+func getProfileId(data *framework.FieldData) string {
+	idInt, flag := data.GetOk("profile")
+	var id string
+	if !flag {
+		id = ""
+	} else {
+		id = idInt.(string)
+	}
+	return id
 }

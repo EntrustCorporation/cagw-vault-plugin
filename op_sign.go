@@ -23,11 +23,9 @@ import (
 
 func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 
-	caId := data.Get("caId").(string)
-	profileId := data.Get("profile").(string)
-
-	if len(profileId) <= 0 {
-		return logical.ErrorResponse("profile is empty"), nil
+	roleName := data.Get("roleName").(string)
+	if len(roleName) <= 0 {
+		return logical.ErrorResponse("a role name must be specified"), nil
 	}
 
 	var err error
@@ -65,12 +63,25 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 
 	csrBase64 := base64.StdEncoding.EncodeToString(csrBlock.Bytes)
 
-	configCa, err := getConfigCA(ctx, req, caId)
+	configRole, err := getConfigRole(ctx, req, roleName)
 	if err != nil {
 		return logical.ErrorResponse("Error fetching config"), err
 	}
 
-	configProfile, err := getConfigProfile(ctx, req, caId, profileId)
+	caId := configRole.CAId
+	if len(caId) <= 0 {
+		caId = roleName
+	}
+
+	profileId := configRole.ProfileId
+	if len(profileId) <= 0 {
+		profileId = data.Get("profile").(string)
+		if len(profileId) <= 0 {
+			return logical.ErrorResponse("a profile must be specified for this CA role configuration"), nil
+		}
+	}
+
+	configProfile, err := getConfigProfile(ctx, req, roleName, profileId)
 
 	ttl := getTTL(data, configProfile)
 
@@ -98,7 +109,7 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 		b.Logger().Debug(fmt.Sprintf("Enrollment request body: %v", string(body)))
 	}
 
-	tlsClientConfig, err := getTLSConfig(ctx, req, configCa)
+	tlsClientConfig, err := getTLSConfig(ctx, req, configRole)
 	if err != nil {
 		return logical.ErrorResponse("Error retrieving TLS configuration: %v", err), err
 	}
@@ -109,7 +120,7 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Post(configCa.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
+	resp, err := client.Post(configRole.URL+"/v1/certificate-authorities/"+caId+"/enrollments", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return logical.ErrorResponse("Error response: %v", err), err
 	}

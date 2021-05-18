@@ -52,9 +52,31 @@ be larger than the role max TTL.`,
 		the certificate and any private key.`,
 	}
 
-	fields["caId"] = &framework.FieldSchema{
+	fields["roleName"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
-		Description: `The CA Id as defined in CAGW configuration.`,
+		Description: `The name of the CAGW configuration.`,
+	}
+
+	return fields
+}
+
+func addConfigProfileCommonFields(fields map[string]*framework.FieldSchema) map[string]*framework.FieldSchema {
+
+	fields["ttl"] = &framework.FieldSchema{
+		Type: framework.TypeDurationSecond,
+		Description: "The lease duration if no specific lease duration is requested. " +
+			"The lease duration controls the expiration of certificates issued by this " +
+			"backend. Defaults to the value of max_ttl.",
+	}
+
+	fields["max_ttl"] = &framework.FieldSchema{
+		Type:        framework.TypeDurationSecond,
+		Description: "The maximum allowed lease duration",
+	}
+
+	fields["roleName"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Description: `The name of the configured CAGW role`,
 	}
 
 	return fields

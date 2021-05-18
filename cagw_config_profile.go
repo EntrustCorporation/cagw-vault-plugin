@@ -35,23 +35,26 @@ type CAGWConfigProfileID struct {
 
 func (p CAGWConfigProfileID) Profile(ctx context.Context, req *logical.Request, data *framework.FieldData) (*CAGWConfigProfile, error) {
 
-	caId := data.Get("caId").(string)
+	roleName := data.Get("roleName").(string)
+	configRole, err := getConfigRole(ctx, req, roleName)
 
-	if len(p.Id) == 0 {
-		return nil, errors.New("Missing the profile ID")
+	if len(p.Id) <= 0 {
+		p.Id = configRole.ProfileId
+		if len(p.Id) <= 0 {
+			return nil, errors.New("Missing the profile ID")
+		}
 	}
 
-	configCa, err := getConfigCA(ctx, req, caId)
 	if err != nil {
 		return nil, errors.New("Error fetching config")
 	}
 
-	tlsClientConfig, err := getTLSConfig(ctx, req, configCa)
+	tlsClientConfig, err := getTLSConfig(ctx, req, configRole)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving TLS configuration: %w", err)
 	}
 
-	profileResp, err := p.getProfile(tlsClientConfig, configCa, caId)
+	profileResp, err := p.getProfile(tlsClientConfig, configRole, roleName)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error response received from gateway: %w", err)
@@ -73,7 +76,7 @@ func (p CAGWConfigProfileID) Profile(ctx context.Context, req *logical.Request, 
 
 }
 
-func (p CAGWConfigProfileID) getProfile(tlsClientConfig *tls.Config, configCa *CAGWConfigCA, caId string) (*ProfileResponse, error) {
+func (p CAGWConfigProfileID) getProfile(tlsClientConfig *tls.Config, configRole *CAGWConfigRole, roleName string) (*ProfileResponse, error) {
 	tr := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsClientConfig,
@@ -81,7 +84,11 @@ func (p CAGWConfigProfileID) getProfile(tlsClientConfig *tls.Config, configCa *C
 
 	client := &http.Client{Transport: tr}
 
-	resp, err := client.Get(configCa.URL + "/v1/certificate-authorities/" + caId + "/profiles/" + p.Id)
+	caId := configRole.CAId
+	if len(caId) <= 0 {
+		caId = roleName
+	}
+	resp, err := client.Get(configRole.URL + "/v1/certificate-authorities/" + caId + "/profiles/" + p.Id)
 	if err != nil {
 		return nil, fmt.Errorf("Error response: %w", err)
 	}

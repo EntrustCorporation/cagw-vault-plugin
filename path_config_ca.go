@@ -12,11 +12,11 @@ import (
 
 func pathConfig(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "config/" + framework.GenericNameRegex("caId"),
+		Pattern: "config/" + framework.GenericNameRegex("roleName"),
 
 		Operations: map[logical.Operation]framework.OperationHandler{
-			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfigCA},
-			logical.UpdateOperation: &framework.PathOperation{Callback: b.opWriteConfigCA},
+			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadConfigRole},
+			logical.UpdateOperation: &framework.PathOperation{Callback: b.opWriteConfigRole},
 		},
 
 		HelpSynopsis:    "CAGW Configuration",
@@ -31,11 +31,25 @@ func pathConfig(b *backend) *framework.Path {
 		Required:    true,
 	}
 
-	ret.Fields["caId"] = &framework.FieldSchema{
+	ret.Fields["roleName"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Default:     "",
+		Description: `Role configuration identifier`,
+		Required:    true,
+	}
+
+	ret.Fields["ca_id"] = &framework.FieldSchema{
 		Type:        framework.TypeString,
 		Default:     "",
 		Description: `CA identifier`,
-		Required:    true,
+		Required:    false,
+	}
+
+	ret.Fields["profile_id"] = &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Default:     "",
+		Description: `Profile identifier to use for this role configuration`,
+		Required:    false,
 	}
 
 	ret.Fields["url"] = &framework.FieldSchema{

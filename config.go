@@ -15,28 +15,30 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getConfigCA(ctx context.Context, req *logical.Request, caId string) (*CAGWConfigCA, error) {
-	storageEntry, err := req.Storage.Get(ctx, "config/"+caId)
+func getConfigRole(ctx context.Context, req *logical.Request, roleName string) (*CAGWConfigRole, error) {
+	storageEntry, err := req.Storage.Get(ctx, "config/"+roleName)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "CAGW configuration could not be loaded")
+		return nil, errors.Wrapf(err, "config/%s configuration could not be loaded", roleName)
 	}
 
-	configCa := CAGWConfigCA{}
-	err = storageEntry.DecodeJSON(&configCa)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "CAGW configuration could not be parsed")
+	configRole := CAGWConfigRole{}
+	if storageEntry != nil {
+		err = storageEntry.DecodeJSON(&configRole)
+		if err != nil {
+			return nil, errors.Wrapf(err, "config/%s configuration could not be parsed", roleName)
+		}
+	} else {
+		return nil, errors.Errorf("config/%s could not be found", roleName)
 	}
-
-	return &configCa, nil
+	return &configRole, nil
 }
 
-func getConfigProfile(ctx context.Context, req *logical.Request, caId string, profileId string) (*CAGWConfigProfile, error) {
-	profileStorageEntry, err := req.Storage.Get(ctx, "config/"+caId+"/profiles/"+profileId)
+func getConfigProfile(ctx context.Context, req *logical.Request, roleName string, profileId string) (*CAGWConfigProfile, error) {
+	profileStorageEntry, err := req.Storage.Get(ctx, "config/"+roleName+"/profiles/"+profileId)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "CAGW profile configuration could not be loaded")
+		return nil, errors.Wrapf(err, "config/%s/profiles/%s could not be loaded", roleName, profileId)
 	}
 
 	configProfile := CAGWConfigProfile{}
@@ -45,10 +47,10 @@ func getConfigProfile(ctx context.Context, req *logical.Request, caId string, pr
 	if profileStorageEntry != nil {
 		err = profileStorageEntry.DecodeJSON(&configProfile)
 		if err != nil {
-			return nil, errors.Wrap(err, "CAGW profile configuration could not be parsed")
+			return nil, errors.Wrapf(err, "config/%s/profiles/%s could not be parsed", roleName, profileId)
 		}
 	} else {
-		return nil, errors.Wrap(err, "CAGW profile configuration could not be found")
+		return nil, errors.Errorf("config/%s/profiles/%s could not be found", roleName, profileId)
 	}
 
 	return &configProfile, nil

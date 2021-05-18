@@ -12,7 +12,7 @@ import (
 
 func pathIssue(b *backend) *framework.Path {
 	ret := &framework.Path{
-		Pattern: "issue/" + framework.GenericNameRegex("caId") + "/?$",
+		Pattern: "issue/" + framework.GenericNameRegex("roleName") + "/?$",
 
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation:   &framework.PathOperation{Callback: b.opReadIssue},
