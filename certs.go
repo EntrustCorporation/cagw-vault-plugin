@@ -14,9 +14,9 @@ import (
 
 func opListCerts(ctx context.Context, req *logical.Request, data *framework.FieldData, path string) (response *logical.Response, retErr error) {
 
-	caId := data.Get("caId").(string)
+	roleName := data.Get("roleName").(string)
 
-	entries, err := req.Storage.List(ctx, path+"/"+caId+"/")
+	entries, err := req.Storage.List(ctx, path+"/"+roleName+"/")
 	if err != nil {
 		return nil, err
 	}
@@ -26,10 +26,10 @@ func opListCerts(ctx context.Context, req *logical.Request, data *framework.Fiel
 
 func opReadCert(ctx context.Context, req *logical.Request, data *framework.FieldData, path string) (*logical.Response, error) {
 
-	caId := data.Get("caId").(string)
+	roleName := data.Get("roleName").(string)
 	serial := data.Get("serial").(string)
 
-	storageEntry, err := req.Storage.Get(ctx, path+"/"+caId+"/"+serial)
+	storageEntry, err := req.Storage.Get(ctx, path+"/"+roleName+"/"+serial)
 	if err != nil {
 		return logical.ErrorResponse("could not read certificate with the serial number: " + serial), err
 	}

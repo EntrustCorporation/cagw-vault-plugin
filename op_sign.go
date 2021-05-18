@@ -82,6 +82,9 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 	}
 
 	configProfile, err := getConfigProfile(ctx, req, roleName, profileId)
+	if err != nil {
+		return logical.ErrorResponse("Could not get profile configuration for profile " + profileId + ": " + err.Error()), err
+	}
 
 	ttl := getTTL(data, configProfile)
 
@@ -170,7 +173,7 @@ func (b *backend) opWriteSign(ctx context.Context, req *logical.Request, data *f
 		}
 	}
 
-	storageEntry, err := logical.StorageEntryJSON("sign/"+caId+"/"+respData["serial_number"].(*big.Int).String(), respData)
+	storageEntry, err := logical.StorageEntryJSON("sign/"+roleName+"/"+respData["serial_number"].(*big.Int).String(), respData)
 
 	if err != nil {
 		return logical.ErrorResponse("error creating certificate storage entry"), err
